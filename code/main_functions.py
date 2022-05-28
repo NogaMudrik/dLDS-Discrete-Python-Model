@@ -6,41 +6,38 @@ Decomposed Linear Dynamical Systems (dLDS) for learning the latent components of
 """
 Imports
 """
+
+# simaple imports
 import matplotlib
-#from sklearn.metrics import r2_score
-from webcolors import name_to_rgb
 import numpy as np
 from scipy import linalg
+import pandas as pd
+import random
+
+# Plotting imports
+from webcolors import name_to_rgb
 import matplotlib.pyplot as plt
 import itertools
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import seaborn as sns
+from colormap import rgb2hex
 
+# Linear algebra imports
 from numpy.linalg import matrix_power
 from scipy.linalg import expm
-from math import e
-from numpy.core.shape_base import stack
-import pandas as pd
-import seaborn as sns
 from sklearn import linear_model
-import random
-from pathlib import Path
+import pylops
+
+# os and files loading imports
 import os
-from tkinter.filedialog import askopenfilename
-from datetime import date
 import dill   
-import scipy.io
 import mat73
 import warnings
-import statsmodels as stats
-from importlib import reload  
-import statsmodels.stats as st
+import pickle
 sep = os.sep
-from IPython.core.display import display, HTML
-from importlib import reload  
-from scipy.interpolate import interp1d
-from colormap import rgb2hex
-from scipy import interpolate
-import pylops
+
+
+
+
 
 #%% The CODEL 
 
@@ -117,6 +114,10 @@ def norm_mat(mat, type_norm = 'evals', to_norm = True):
     if type_norm == 'evals':
       eigenvalues, _ =  linalg.eig(mat)
       mat = mat / np.max(np.abs(eigenvalues))
+    elif type_norm == 'max':
+      mat = mat / np.max(np.abs(mat))
+    elif type_norm  == 'exp':
+      mat = np.exp(-np.trace(mat))*expm(mat)
   return mat
 
 
@@ -370,16 +371,6 @@ def create_ci_fi_xt(latent_dyn,F,coefficients, cumulative = False,error_order = 
     all_grads.append(gradient_val)
   return np.dstack(all_grads)
 
-def norm_mat_by_max(mat, to_norm = True, type_norm = 'exp'):
-  """
-  normalize a matrix by dividing by its max value or by fixing the determinant to 1
-  """  
-  if to_norm:
-    if type_norm == 'max':
-      mat = mat / np.max(np.abs(mat))
-    elif type_norm  == 'exp':
-      mat = np.exp(-np.trace(mat))*expm(mat)
-  return mat
 
 def update_f_all(latent_dyn,F,coefficients,step_f, normalize = False, acumulated_error = False,error_order = 1,action_along_time = 'mean', weights_power = 1.2, weights = [], normalize_eig = True,  bias_val = []):
     
@@ -392,21 +383,21 @@ def update_f_all(latent_dyn,F,coefficients,step_f, normalize = False, acumulated
   if action_along_time == 'mean':
     if acumulated_error:
       all_grads = create_ci_fi_xt(latent_dyn,F,coefficients, cumulative = acumulated_error, error_order = error_order, weights_power=weights_power,weights =weights, bias_val = bias_val)
-      new_f_s = [norm_mat(f_i-2*step_f*norm_mat_by_max(np.mean(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
+      new_f_s = [norm_mat(f_i-2*step_f*norm_mat(np.mean(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
     
     else:
       all_grads = create_ci_fi_xt(latent_dyn,F,coefficients,error_order = error_order, weights_power=weights_power,weights =weights, bias_val = bias_val)
-      new_f_s = [norm_mat(f_i-2*step_f*norm_mat_by_max(np.mean(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
+      new_f_s = [norm_mat(f_i-2*step_f*norm_mat(np.mean(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
   elif action_along_time == 'median':
     if acumulated_error:
       all_grads = create_ci_fi_xt(latent_dyn,F,coefficients, cumulative = acumulated_error, error_order = error_order, weights_power=weights_power,weights =weights, bias_val = bias_val)
-      new_f_s = [norm_mat(f_i-2*step_f*norm_mat_by_max(np.median(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
+      new_f_s = [norm_mat(f_i-2*step_f*norm_mat(np.median(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
     
     else:
       all_grads = create_ci_fi_xt(latent_dyn,F,coefficients,error_order = error_order, weights_power=weights_power,weights =weights, bias_val = bias_val)
       
       
-      new_f_s = [norm_mat(f_i-2*step_f*norm_mat_by_max(np.median(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
+      new_f_s = [norm_mat(f_i-2*step_f*norm_mat(np.median(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
   else:
     raise NameError('Unknown action along time. Should be mean or median')
   for f_num in range(len(new_f_s)):
@@ -667,21 +658,21 @@ def quiver_plot(sub_dyn = [], xmin = -5, xmax = 5, ymin = -5, ymax = 5, ax = [],
 
     
     
-# def movmfunc(func, mat, window = 3, direction = 0):
-#   """
-#   moving window with applying the function func on the matrix 'mat' towrads the direction 'direction'
-#   """
-#   if len(mat.shape) == 1: 
-#       mat = mat.reshape((-1,1))
-#       direction = 0
-#   addition = int(np.ceil((window-1)/2))
-#   if direction == 0:
-#     mat_wrap = np.vstack([np.nan*np.ones((addition,np.shape(mat)[1])), mat, np.nan*np.ones((addition,np.shape(mat)[1]))])
-#     movefunc_res = np.vstack([func(mat_wrap[i-addition:i+addition,:],axis = direction) for i in range(addition, np.shape(mat_wrap)[0]-addition)])
-#   elif direction == 1:
-#     mat_wrap = np.hstack([np.nan*np.ones((np.shape(mat)[0],addition)), mat, np.nan*np.ones((np.shape(mat)[0],addition))])
-#     movefunc_res = np.vstack([func(mat_wrap[:,i-addition:i+addition],axis = direction) for i in range(addition, np.shape(mat_wrap)[1]-addition)]).T
-#   return movefunc_res
+def movmfunc(func, mat, window = 3, direction = 0):
+  """
+  moving window with applying the function func on the matrix 'mat' towrads the direction 'direction'
+  """
+  if len(mat.shape) == 1: 
+      mat = mat.reshape((-1,1))
+      direction = 0
+  addition = int(np.ceil((window-1)/2))
+  if direction == 0:
+    mat_wrap = np.vstack([np.nan*np.ones((addition,np.shape(mat)[1])), mat, np.nan*np.ones((addition,np.shape(mat)[1]))])
+    movefunc_res = np.vstack([func(mat_wrap[i-addition:i+addition,:],axis = direction) for i in range(addition, np.shape(mat_wrap)[0]-addition)])
+  elif direction == 1:
+    mat_wrap = np.hstack([np.nan*np.ones((np.shape(mat)[0],addition)), mat, np.nan*np.ones((np.shape(mat)[0],addition))])
+    movefunc_res = np.vstack([func(mat_wrap[:,i-addition:i+addition],axis = direction) for i in range(addition, np.shape(mat_wrap)[1]-addition)]).T
+  return movefunc_res
 
 def create_reco(latent_dyn,coefficients, F, accumulation = False, step_n = 1,type_find = 'median',min_far =10, smooth_coeffs = False, smoothing_params = {'wind':5},enable_history = True, bias_type = 'disable', bias_val = []):
   """
@@ -1076,10 +1067,10 @@ def find_dominant_dyn(coefficients):
 #   return evecs_list,evals_list
 
 
-# def add_arrow(ax, start, end,arrowprops = {'facecolor' : 'black', 'width':1, 'alpha' :0.2} ):
-#     arrowprops = {**{'facecolor' : 'black', 'width':1.5, 'alpha' :0.2, 'edgecolor':'none'}, **arrowprops}
-#     ax.annotate('',ha = 'center', va = 'bottom',  xytext = start,xy =end,
-#                 arrowprops = arrowprops)
+def add_arrow(ax, start, end,arrowprops = {'facecolor' : 'black', 'width':1, 'alpha' :0.2} ):
+    arrowprops = {**{'facecolor' : 'black', 'width':1.5, 'alpha' :0.2, 'edgecolor':'none'}, **arrowprops}
+    ax.annotate('',ha = 'center', va = 'bottom',  xytext = start,xy =end,
+                arrowprops = arrowprops)
 
     
     
@@ -1244,7 +1235,7 @@ def plot_subs_effects_2d(F, colors =[['r','maroon','darkred','coral'],['forestgr
     dummy_lines = []
     dummy_lines.append(axs[0,0].plot([],[], c="black", ls = '--', lw = lw)[0])
     dummy_lines.append(axs[0,0].plot([],[], c="black", ls = '-', lw = lw)[0])
-    #lines = axs.get_lines()
+
     legend = axs[0,1].legend([dummy_lines[i] for i in [0,1]], ['Original', 'after sub-dynamic transform'], loc = loc_leg )
     axs[0,1].add_artist(legend)
     if include_dyn:
@@ -2305,29 +2296,29 @@ def relative_eror(reco,real, return_mean = True, func = np.nanmean):
     return func(error_point,0)
 
 
-def claculate_percent_close(reco, real, epsilon_close = 3, return_quantiles = False, quantiles = [0.05,0.95]):
-    """
-    Calculte the ratio of close (within a specific distance) points among all dynamics' points
-    Inputs:
-        reco: k X T reconstructed dynamics matrix
-        real: k X T real dynamics matrix (ground truth)
-        epsilon_close: Threshold for distance
-        return_quantiles: whether to return confidence interval values
-        quantiles: lower / higher limits for the quantiles
+# def claculate_percent_close(reco, real, epsilon_close = 3, return_quantiles = False, quantiles = [0.05,0.95]):
+#     """
+#     Calculte the ratio of close (within a specific distance) points among all dynamics' points
+#     Inputs:
+#         reco: k X T reconstructed dynamics matrix
+#         real: k X T real dynamics matrix (ground truth)
+#         epsilon_close: Threshold for distance
+#         return_quantiles: whether to return confidence interval values
+#         quantiles: lower / higher limits for the quantiles
         
-    reco: k X T
-    real: k X T
-    """
-    close_enough = np.sqrt(np.sum((reco - real)**2,0)) < epsilon_close
+#     reco: k X T
+#     real: k X T
+#     """
+#     close_enough = np.sqrt(np.sum((reco - real)**2,0)) < epsilon_close
 
-    if return_quantiles:
-        try:
-            q1,q2 = stats.proportion.proportion_confint(np.sum(close_enough),len(close_enough),quantiles[0])
-        except:
-            q1 = np.mean(close_enough)
-            q2 = np.mean(close_enough)
-        return np.mean(close_enough), q1, q2
-    return np.mean(close_enough)
+#     if return_quantiles:
+#         try:
+#             q1,q2 = stats.proportion.proportion_confint(np.sum(close_enough),len(close_enough),quantiles[0])
+#         except:
+#             q1 = np.mean(close_enough)
+#             q2 = np.mean(close_enough)
+#         return np.mean(close_enough), q1, q2
+#     return np.mean(close_enough)
     
 def plot_bar_contri(contri, ax = [],suptitle = '', fig = []):
     """
@@ -2442,70 +2433,10 @@ def load_mat_file(mat_name , mat_path = '',sep = sep):
 
     
     
-    
-    
-    
-    
-    
-def plot_most_likely_dynamics(reg, dynamics_distns,xlim=(-4, 4), ylim=(-3, 3), nxpts=20, nypts=10,
-        alpha=0.8,     ax=None, figsize=(3, 3)):
-    K = len(dynamics_distns)
-    D_latent = dynamics_distns[0].D_out
-    x = np.linspace(*xlim, nxpts)
-    y = np.linspace(*ylim, nypts)
-    X, Y = np.meshgrid(x, y)
-    xy = np.column_stack((X.ravel(), Y.ravel()))
-
-    # Get the probability of each state at each xy location
-    Ts = reg.get_trans_matrices(xy)
-    prs = Ts[:, 0, :]
-    z = np.argmax(prs, axis=1)
-
-    if ax is None:
-        fig = plt.figure(figsize=figsize)
-        ax = fig.add_subplot(111)
-
-    for k in range(K):
-        A = dynamics_distns[k].A[:, :D_latent]
-        b = dynamics_distns[k].A[:, D_latent:]
-        dydt_m = xy.dot(A.T) + b.T - xy
-
-        zk = z == k
-        if zk.sum(0) > 0:
-            ax.quiver(xy[zk, 0], xy[zk, 1],
-                      dydt_m[zk, 0], dydt_m[zk, 1],
-                      color=colors[k], alpha=alpha)
-
-    ax.set_xlabel('$x_1$')
-    ax.set_ylabel('$x_2$')
-
-    plt.tight_layout()
-
-    return ax
-    
+   
     
 #%% Plot Multi-colored line
-def try_norm_coeffs(coefficients,x_highs_y_highs = [], x_lows_y_lows = [] , choose_meth = 'both',
-                            same_width = True,factor_power = 0.9, width_des = 0.7, initial_point = 'start', latent_dyn = [], quarter_initial = 'low'):
-    if len(latent_dyn) == 0: raise ValueError('Empty latent dyn was provided')
-    coefficients_n = norm_over_time(coefficients, type_norm = 'normal')
-    coefficients_n = coefficients_n - np.min(coefficients_n,1).reshape((-1,1))
-    if same_width:
-        coefficients_n = width_des*(coefficients_n**factor_power) / np.sum(coefficients_n**factor_power,axis = 0)   
-    else:
-        coefficients_n = coefficients_n / np.sum(coefficients_n,axis = 0)  
-    return coefficients_n
-
-    
-
-
-
-def plot_weighted_colored_line(dyn, coeffs, ax = [], fig=None ):
-    coefficients = norm_over_time(coefficients, type_norm = 'normal')
-    if isinstance(ax,list) and len(ax) == 0:
-        fig, ax = plt.subplots()
- 
-            
+       
     
 def min_dist(dotA1, dotA2, dotB1, dotB2, num_sects = 500):
     x_lin = np.linspace(dotA1[0], dotA2[0])
@@ -2524,13 +2455,13 @@ def min_dist(dotA1, dotA2, dotB1, dotB2, num_sects = 500):
     
     
 #%% FHN model
-# taken from https://www.normalesup.org/~doulcier/teaching/modeling/excitable_systems.html    
-    
-def create_FHN(dt = 0.01, max_t = 100, I_ext = 0.5, b = 0.7, a = 0.8 , tau = 20, v0 = -0.5, w0 = 0, params = {'exp_power' : 0.9, 'change_speed': False}):
+ 
+   
+def create_FHN(dt = 0.01, max_t = 100, I_ext = 0.5, b = 0.7, a = 0.8 , tau = 20, v0 = -0.5, w0 = 0, 
+               params = {'exp_power' : 0.9, 'change_speed': False}):
     time_points = np.arange(0, max_t, dt)
     if params['change_speed']:
-        time_points = time_points**params['exp_power']
-    
+        time_points = time_points**params['exp_power']    
         
     w_full = []
     v_full = []
@@ -2550,6 +2481,7 @@ def cal_next_FHN(v,w, dt = 0.01, max_t = 300, I_ext = 0.5, b = 0.7, a = 0.8 , ta
     return v_next, w_next
     
 #%% Plot tricolor
+
 def norm_over_time(coefficients, type_norm = 'normal'):
     if type_norm == 'normal':
         coefficients_norm = (coefficients - np.mean(coefficients,1).reshape((-1,1)))/np.std(coefficients, 1).reshape((-1,1))
@@ -2651,11 +2583,6 @@ def find_perpendicular(d1, d2, perp_length = 1, prev_v = [], next_v = [], ref_po
                 dist1 = np.sum((prev_mid - d2_perp1)**2)
                 dist2 = np.sum((prev_mid - d2_perp2)**2)
                 max_opt = np.argmin([dist1,dist2])  
-                     
-     
-                                 
-       
-                          
                 
         else:
         
@@ -2716,9 +2643,7 @@ def find_lows_high(coeff_row, latent_dyn,   choose_meth ='intersection',factor_p
           
             if len(ref_point) >  0 and layer_num > 0 :  #and t_num  < 3
                  pass
-          
-        
-        # if do not consider layer
+
         
         elif t_num > 2 and (choose_meth == 'smooth' or choose_meth == 'intersection'):   
             ref_point  = d2_perp
@@ -2776,15 +2701,10 @@ def plot_multi_colors(store_dict,min_time_plot = 0,max_time_plot = -100,  colors
             d1_p_start =[np.array(x_highs_y_highs)[min_time_plot,0],np.array(x_highs_y_highs)[min_time_plot,1]]
                                                        
             d2_p_start=  [np.array(x_highs_y_highs)[min_time_plot+1,0],np.array(x_highs_y_highs)[min_time_plot+1,1]]                                                        
-            # find_perpendicular([np.array(x_highs_y_highs)[min_time_plot,0],np.array(x_highs_y_highs)[min_time_plot,1]], 
-            #                                             [np.array(x_highs_y_highs)[min_time_plot+1,0],np.array(x_highs_y_highs)[min_time_plot+1,1]], 
-            #                                             perp_length = c_len**factor_power, 
-            #                                             ref_point= low_ref,
-            #                                             choose_meth = 'intersection',initial_point = 'start')
+
             x_lows_y_lows = store_dict[key][0]
             x_highs_y_highs = store_dict[key][1] 
-            #d1_p_start = np.array(x_highs_y_highs)[0,0]
-            #d2_p_start  = np.array(x_highs_y_highs)[0,1]
+
             stack_x = np.hstack([np.array(x_lows_y_lows)[min_time_plot:max_time_plot,0].flatten(), np.array([d2_p[0]]), np.array(x_highs_y_highs)[max_time_plot-1:min_time_plot+1:-1,0].flatten(),np.array([d2_p_start[0]])])
             stack_y = np.hstack([np.array(x_lows_y_lows)[min_time_plot:max_time_plot,1].flatten(), np.array([d2_p[1]]),np.array(x_highs_y_highs)[max_time_plot-1:min_time_plot+1:-1,1].flatten(),np.array([d2_p_start[1]])])
             
@@ -2824,7 +2744,7 @@ def norm_coeffs(coefficients, type_norm, same_width = True,width_des = 0.7,facto
     if type_norm == 'norm':
         coefficients_n =      norm_over_time(np.abs(coefficients), type_norm = 'normal')   
         coefficients_n =      coefficients_n - np.min(coefficients_n,1).reshape((-1,1))
-        #plt.plot(coefficients_n.T)
+
     elif type_norm == 'sum_abs':
         coefficients[np.abs(coefficients) < min_width] = min_width
         coefficients_n = np.abs(coefficients) / np.sum(np.abs(coefficients),1).reshape((-1,1))
@@ -2881,40 +2801,37 @@ def calculate_high_for_all(coefficients, choose_meth = 'both', same_width = True
             dyn_use = np.hstack([latent_dyn[:,:2], dyn_use, latent_dyn[:,-2:]])
         else:
             dyn_use = np.array(x_highs_y_highs).T
-        #if row > 0:
-        ref_point = np.array(x_lows_y_lows)#[0,:]
-        #print('ref point')
-        #ref_point)
-        #else:
-        #   ref_point = []
+
+        ref_point = np.array(x_lows_y_lows)
+
     return store_dict, coefficients_n    
 
-def add_bar_dynamics(coefficients_n, ax_all_all = [],min_max_points = [10,100,200,300,400,500], 
-                     colors = np.array(['r','g','b','yellow']), centralize = False):
-    if isinstance(ax_all_all, list) and len(ax_all_all) == 0:
-        fig, ax_all_all  = plt.subplots(1,len(min_max_points), figsize = (8*len(min_max_points), 7))
+# def add_bar_dynamics(coefficients_n, ax_all_all = [],min_max_points = [10,100,200,300,400,500], 
+#                      colors = np.array(['r','g','b','yellow']), centralize = False):
+#     if isinstance(ax_all_all, list) and len(ax_all_all) == 0:
+#         fig, ax_all_all  = plt.subplots(1,len(min_max_points), figsize = (8*len(min_max_points), 7))
 
-    max_bar = np.max(np.abs(coefficients_n[:,min_max_points]))
-    for pair_num,val in enumerate(min_max_points):
-        ax_all = ax_all_all[pair_num]
+#     max_bar = np.max(np.abs(coefficients_n[:,min_max_points]))
+#     for pair_num,val in enumerate(min_max_points):
+#         ax_all = ax_all_all[pair_num]
 
         
-        ax_all.bar(np.arange(coefficients_n.shape[0]),coefficients_n[:,val], 
-                   color = np.array(colors)[:coefficients_n.shape[0]],
-                   alpha = 0.3)
-        # ax_all.set_title('t = %s'%str(val), fontsize = 40, fontweight = 'bold')
-        ax_all.get_xaxis().set_ticks([]) #for ax in ax_all]
-        ax_all.get_yaxis().set_ticks([]) #for ax in ax_all]
-        ax_all.spines['top'].set_visible(False)
+#         ax_all.bar(np.arange(coefficients_n.shape[0]),coefficients_n[:,val], 
+#                    color = np.array(colors)[:coefficients_n.shape[0]],
+#                    alpha = 0.3)
+#         # ax_all.set_title('t = %s'%str(val), fontsize = 40, fontweight = 'bold')
+#         ax_all.get_xaxis().set_ticks([]) #for ax in ax_all]
+#         ax_all.get_yaxis().set_ticks([]) #for ax in ax_all]
+#         ax_all.spines['top'].set_visible(False)
         
-        ax_all.spines['right'].set_visible(False)
-        ax_all.spines['bottom'].set_visible(False)
-        ax_all.spines['left'].set_visible(False)  
-        ax_all.axhline(0, ls = '-',alpha = 0.5, color = 'black', lw = 6)
-        ax_all.set_ylim([-max_bar,max_bar])
-def create_name_fhn_files(reg_value, num_dynamics):
-    new_name = r'E:\CoDyS-Python-rep-\fhn\multifhn_%ssub%sreg.npy'%(str(num_dynamics), str(reg_value).replace('.','_'))
-    return new_name
+#         ax_all.spines['right'].set_visible(False)
+#         ax_all.spines['bottom'].set_visible(False)
+#         ax_all.spines['left'].set_visible(False)  
+#         ax_all.axhline(0, ls = '-',alpha = 0.5, color = 'black', lw = 6)
+#         ax_all.set_ylim([-max_bar,max_bar])
+# def create_name_fhn_files(reg_value, num_dynamics):
+#     new_name = r'E:\CoDyS-Python-rep-\fhn\multifhn_%ssub%sreg.npy'%(str(num_dynamics), str(reg_value).replace('.','_'))
+#     return new_name
     
 #%% Plot 2d axis of coeffs for fig 2
 
@@ -3083,7 +3000,6 @@ def plot_3d_dyn_basis(F, coefficients, projection = [0,-1], ax = [],  fig = [], 
         ax.set_yticks([])
         if quiver_3d:
             ax.set_zticks([])    
-    #if include_quiver:
     [quiver_plot(f,-range_p, range_p, -range_p, range_p, ax = ax_base[f_num],chosen_color =  'black', w = w, type_plot = type_plot,cons_color =cons_color,quiver_3d = quiver_3d ) for f_num, f in enumerate(F)]
     [ax_base_spec.set_title('f %s'%str(i), fontsize = 16) for i, ax_base_spec in enumerate(ax_base)]
     
