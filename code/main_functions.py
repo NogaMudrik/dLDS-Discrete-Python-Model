@@ -1,11 +1,13 @@
-# -*- coding: utf-8 -*-
-
+"""
+Decomposed Linear Dynamical Systems (dLDS) for learning the latent components of neural dynamics
+@author: noga mudrik
+"""
 
 """
 Imports
 """
 import matplotlib
-from sklearn.metrics import r2_score
+#from sklearn.metrics import r2_score
 from webcolors import name_to_rgb
 import numpy as np
 from scipy import linalg
@@ -414,29 +416,29 @@ def update_f_all(latent_dyn,F,coefficients,step_f, normalize = False, acumulated
   return new_f_s
 
 
-def update_bias(latent_dyn, F,coefficients,action_along_time= 'median' ):
-    x_t_next = latent_dyn[:,1:]    
-    cur_reco = create_reco(latent_dyn,coefficients, F, accumulation = False, step_n = 1,type_find = action_along_time)
-    x_t_next_predicted = cur_reco[:,1:]
-    if action_along_time == 'median':
-        bias_val = np.median(x_t_next - x_t_next_predicted, 1).reshape((-1,1))
-    elif action_along_time == 'mean':
-        bias_val = np.mean(x_t_next - x_t_next_predicted, 1).reshape((-1,1))
-    else:
-        raise NameError('Unknown function along time')
-    return bias_val 
+# def update_bias(latent_dyn, F,coefficients,action_along_time= 'median' ):
+#     x_t_next = latent_dyn[:,1:]    
+#     cur_reco = create_reco(latent_dyn,coefficients, F, accumulation = False, step_n = 1,type_find = action_along_time)
+#     x_t_next_predicted = cur_reco[:,1:]
+#     if action_along_time == 'median':
+#         bias_val = np.median(x_t_next - x_t_next_predicted, 1).reshape((-1,1))
+#     elif action_along_time == 'mean':
+#         bias_val = np.mean(x_t_next - x_t_next_predicted, 1).reshape((-1,1))
+#     else:
+#         raise NameError('Unknown function along time')
+#     return bias_val 
     
     
-def update_bias_out(latent_dyn, data_spec , D,action_along_time= 'median' ):
-    if along_time == 'median':
-        bias_out_val = np.median(data_spec - D @ latent_dyn, 1).reshape((-1,1))
-    elif along_time == 'mean':
-        bias_out_val = np.mean(data_spec - D @ latent_dyn, 1).reshape((-1,1))
-    return bias_out_val        
+# def update_bias_out(latent_dyn, data_spec , D,action_along_time= 'median' ):
+#     if along_time == 'median':
+#         bias_out_val = np.median(data_spec - D @ latent_dyn, 1).reshape((-1,1))
+#     elif along_time == 'mean':
+#         bias_out_val = np.mean(data_spec - D @ latent_dyn, 1).reshape((-1,1))
+#     return bias_out_val        
     
     
     
-    
+  
     
 def lorenz(x, y, z, s=10, r=25, b=2.667):
     """
@@ -560,8 +562,6 @@ def create_dynamics(type_dyn = 'cyl', max_time = 1000, dt = 0.01, change_speed =
 def rgb_to_hex(rgb_vec):
   r = rgb_vec[0]; g = rgb_vec[1]; b = rgb_vec[2]
   return rgb2hex(int(255*r), int(255*g), int(255*b))
-# def rgb_to_hex(rgb):
-#     return '%02x%02x%02x' % rgb
 
 def quiver_plot(sub_dyn = [], xmin = -5, xmax = 5, ymin = -5, ymax = 5, ax = [], chosen_color = 'red',
                 alpha = 0.4, w = 0.02, type_plot = 'quiver', zmin = -5, zmax = 5, cons_color = False,
@@ -636,8 +636,6 @@ def quiver_plot(sub_dyn = [], xmin = -5, xmax = 5, ymin = -5, ymax = 5, ax = [],
                         V[xloc,yloc,zloc] = new_mat[1,:] @ np.array([X[xloc,yloc,zloc] ,Y[xloc,yloc,zloc] ,Z[xloc,yloc,zloc] ]).reshape((-1,1))
                         W[xloc,yloc,zloc] = new_mat[2,:] @ np.array([X[xloc,yloc,zloc] ,Y[xloc,yloc,zloc] ,Z[xloc,yloc,zloc] ]).reshape((-1,1))
 
-
-
             if type_plot == 'quiver':                    
                 h = ax.quiver(X,Y,Z,U,V,W, color = chosen_color, alpha = alpha,lw = 1.5, length=0.8, normalize=True,arrow_length_ratio=0.5)#, width = w
                 ax.grid(False)
@@ -655,36 +653,35 @@ def quiver_plot(sub_dyn = [], xmin = -5, xmax = 5, ymin = -5, ymax = 5, ax = [],
             
             
     
-def create_syn(F = [], coeffs = [], n_times = 1000, dims = 2)    :
-    if isinstance(F, list) and len(F) == 0:
-        F = [np.array([[0,-1],[1,0]])]
-    if isinstance(coeffs, list) and len(coeffs) == 0:
-        #coeffs = np.vstack([100*np.sin(np.linspace(0,10,n_times)),0.000000000000000000000000000001*np.cos(np.linspace(0,10,n_times))])
-        coeffs = np.sin(np.linspace(0,100,n_times)).reshape((1,-1))# np.random.rand(1,n_times)# np.ones((2,n_times))
-    latent_dyn_0 = 20*np.ones(dims)
-    latent_dyn_all = np.zeros((dims,n_times))
-    latent_dyn_all[:,0] = [20,-20]#latent_dyn_0
-    dyn = create_reco(latent_dyn_all,coeffs, F, accumulation = True)
+# def create_syn(F = [], coeffs = [], n_times = 1000, dims = 2)    :
+#     if isinstance(F, list) and len(F) == 0:
+#         F = [np.array([[0,-1],[1,0]])]
+#     if isinstance(coeffs, list) and len(coeffs) == 0:
+#         coeffs = np.sin(np.linspace(0,100,n_times)).reshape((1,-1))# np.random.rand(1,n_times)# np.ones((2,n_times))
+#     latent_dyn_0 = 20*np.ones(dims)
+#     latent_dyn_all = np.zeros((dims,n_times))
+#     latent_dyn_all[:,0] = [20,-20]#latent_dyn_0
+#     dyn = create_reco(latent_dyn_all,coeffs, F, accumulation = True)
  
-    return dyn
+#     return dyn
 
     
     
-def movmfunc(func, mat, window = 3, direction = 0):
-  """
-  moving window with applying the function func on the matrix 'mat' towrads the direction 'direction'
-  """
-  if len(mat.shape) == 1: 
-      mat = mat.reshape((-1,1))
-      direction = 0
-  addition = int(np.ceil((window-1)/2))
-  if direction == 0:
-    mat_wrap = np.vstack([np.nan*np.ones((addition,np.shape(mat)[1])), mat, np.nan*np.ones((addition,np.shape(mat)[1]))])
-    movefunc_res = np.vstack([func(mat_wrap[i-addition:i+addition,:],axis = direction) for i in range(addition, np.shape(mat_wrap)[0]-addition)])
-  elif direction == 1:
-    mat_wrap = np.hstack([np.nan*np.ones((np.shape(mat)[0],addition)), mat, np.nan*np.ones((np.shape(mat)[0],addition))])
-    movefunc_res = np.vstack([func(mat_wrap[:,i-addition:i+addition],axis = direction) for i in range(addition, np.shape(mat_wrap)[1]-addition)]).T
-  return movefunc_res
+# def movmfunc(func, mat, window = 3, direction = 0):
+#   """
+#   moving window with applying the function func on the matrix 'mat' towrads the direction 'direction'
+#   """
+#   if len(mat.shape) == 1: 
+#       mat = mat.reshape((-1,1))
+#       direction = 0
+#   addition = int(np.ceil((window-1)/2))
+#   if direction == 0:
+#     mat_wrap = np.vstack([np.nan*np.ones((addition,np.shape(mat)[1])), mat, np.nan*np.ones((addition,np.shape(mat)[1]))])
+#     movefunc_res = np.vstack([func(mat_wrap[i-addition:i+addition,:],axis = direction) for i in range(addition, np.shape(mat_wrap)[0]-addition)])
+#   elif direction == 1:
+#     mat_wrap = np.hstack([np.nan*np.ones((np.shape(mat)[0],addition)), mat, np.nan*np.ones((np.shape(mat)[0],addition))])
+#     movefunc_res = np.vstack([func(mat_wrap[:,i-addition:i+addition],axis = direction) for i in range(addition, np.shape(mat_wrap)[1]-addition)]).T
+#   return movefunc_res
 
 def create_reco(latent_dyn,coefficients, F, accumulation = False, step_n = 1,type_find = 'median',min_far =10, smooth_coeffs = False, smoothing_params = {'wind':5},enable_history = True, bias_type = 'disable', bias_val = []):
   """
@@ -943,144 +940,146 @@ def find_dominant_dyn(coefficients):
     return domi  
 
 
-def check_subs_effect(latent_dyn,F,coefficients, ax = [], dict_store = {}, pre_name ='without', to_plot = True , min_time = 0, params_plot = {}, update_coeffs = True,  
-                      color_sig_type = 'mse', fig = [], title_fig = '', include_colorbar = False,cmap = 'cool', random_colors = True,store_data = True,
-                      plot_percent = False,range_close = [],ax_percent = [], plot_backward = True, plot_forward = True, figsize = (15,10)):
-  """
-  Check the effect of each sub-dynamics by exploring the gain in error when removing it, and the gain of error when using only it. 
-  """    
+# def check_subs_effect(latent_dyn,F,coefficients, ax = [], dict_store = {}, pre_name ='without', to_plot = True , min_time = 0, params_plot = {}, update_coeffs = True,  
+#                       color_sig_type = 'mse', fig = [], title_fig = '', include_colorbar = False,cmap = 'cool', random_colors = True,store_data = True,
+#                       plot_percent = False,range_close = [],ax_percent = [], plot_backward = True, plot_forward = True, figsize = (15,10)):
+#   """
+#   Check the effect of each sub-dynamics by exploring the gain in error when removing it, and the gain of error when using only it. 
+#   """    
 
-  if len(range_close) == 0: range_close = np.linspace(10**-8, 10,30)
-  num_subdyns = len(F)
-  withouts = [list(itertools.combinations(np.arange(num_subdyns),k)) for k in range(num_subdyns)]  
-  colors = np.random.rand(3,coefficients.shape[0])
-  if store_data: 
-      stored_contri = {'Gain with':pd.DataFrame(np.zeros((coefficients.shape[0],2)), index = np.arange(coefficients.shape[0]),columns= ['1-error','% correct']),'Loss without':pd.DataFrame(np.zeros((coefficients.shape[0],2)), index = np.arange(coefficients.shape[0]), columns = ['error','% wrong'])}
-  if plot_percent:
-      if isinstance(ax_percent,list):
-        if len(ax_percent) == 0:
-            fig_percent, ax_percent = plt.subplots(2,2, figsize =figsize)      
-  if to_plot:
-    if isinstance(ax, list):
-      if len(ax) == 0:
-         max_len_without = np.max([len(without_spec) for without_spec in withouts])
-         if latent_dyn.shape[0] == 3:         fig, ax = plt.subplots(len(withouts),max_len_without,figsize = figsize, subplot_kw={'projection':'3d'})  
-         else:                                fig, ax = plt.subplots(len(withouts),max_len_without,figsize = figsize)  
+#   if len(range_close) == 0: range_close = np.linspace(10**-8, 10,30)
+#   num_subdyns = len(F)
+#   withouts = [list(itertools.combinations(np.arange(num_subdyns),k)) for k in range(num_subdyns)]  
+#   colors = np.random.rand(3,coefficients.shape[0])
+#   if store_data: 
+#       stored_contri = {'Gain with':pd.DataFrame(np.zeros((coefficients.shape[0],2)), index = np.arange(coefficients.shape[0]),columns= ['1-error','% correct']),'Loss without':pd.DataFrame(np.zeros((coefficients.shape[0],2)), index = np.arange(coefficients.shape[0]), columns = ['error','% wrong'])}
+#   if plot_percent:
+#       if isinstance(ax_percent,list):
+#         if len(ax_percent) == 0:
+#             fig_percent, ax_percent = plt.subplots(2,2, figsize =figsize)      
+#   if to_plot:
+#     if isinstance(ax, list):
+#       if len(ax) == 0:
+#          max_len_without = np.max([len(without_spec) for without_spec in withouts])
+#          if latent_dyn.shape[0] == 3:         fig, ax = plt.subplots(len(withouts),max_len_without,figsize = figsize, subplot_kw={'projection':'3d'})  
+#          else:                                fig, ax = plt.subplots(len(withouts),max_len_without,figsize = figsize)  
          
-    if not isinstance(ax,np.ndarray):        ax = np.array([[ax]])
-    if len(ax.shape) == 1: ax = ax.reshape((-1,1))
-  for group_num, without_group in enumerate(withouts):
-    for without_num, without in enumerate(without_group):
-      with_subs = list(set(np.arange(num_subdyns)) - set(without))  
-      if update_coeffs:        
-        coeffs_run= update_c(np.array(F)[with_subs].tolist(),latent_dyn[:,min_time:],{})        
-      else:
-        if len(with_subs) == 1: coeffs_run = coefficients[np.array(with_subs),min_time:].reshape((1,-1))          
-        else: 
-            coeffs_run = coefficients[np.array(with_subs),min_time:]            
-      F_run = [f_i for i,f_i in enumerate(F) if i in with_subs]
-      reco = create_reco(latent_dyn[:,min_time:],coeffs_run, F_run)
-      name_store = '_'.join(['without'] + [str(num_without) for num_without in without])
-      dict_store[name_store] = reco
-      mse_without = np.sqrt(np.mean((reco-latent_dyn[:,min_time:])**2))
-      ## Store data      
-      if store_data:
-          if len(with_subs) == 1:
-              calcul_contribution(reco, latent_dyn[:,min_time:], direction = 'forward')
-              stored_contri['Gain with'].iloc[with_subs[0],:] =  calcul_contribution(reco, latent_dyn[:,min_time:], direction = 'forward')
-              if plot_forward:
-                  plot_dots_close(reco,latent_dyn[:,min_time:], range_close =range_close, conf_int = 0.05, ax =ax_percent[1,0], color =colors[:,with_subs[0]] , label = with_subs[0])
+#     if not isinstance(ax,np.ndarray):        ax = np.array([[ax]])
+#     if len(ax.shape) == 1: ax = ax.reshape((-1,1))
+#   for group_num, without_group in enumerate(withouts):
+#     for without_num, without in enumerate(without_group):
+#       with_subs = list(set(np.arange(num_subdyns)) - set(without))  
+#       if update_coeffs:        
+#         coeffs_run= update_c(np.array(F)[with_subs].tolist(),latent_dyn[:,min_time:],{})        
+#       else:
+#         if len(with_subs) == 1: coeffs_run = coefficients[np.array(with_subs),min_time:].reshape((1,-1))          
+#         else: 
+#             coeffs_run = coefficients[np.array(with_subs),min_time:]            
+#       F_run = [f_i for i,f_i in enumerate(F) if i in with_subs]
+#       reco = create_reco(latent_dyn[:,min_time:],coeffs_run, F_run)
+#       name_store = '_'.join(['without'] + [str(num_without) for num_without in without])
+#       dict_store[name_store] = reco
+#       mse_without = np.sqrt(np.mean((reco-latent_dyn[:,min_time:])**2))
+#       ## Store data      
+#       if store_data:
+#           if len(with_subs) == 1:
+#               calcul_contribution(reco, latent_dyn[:,min_time:], direction = 'forward')
+#               stored_contri['Gain with'].iloc[with_subs[0],:] =  calcul_contribution(reco, latent_dyn[:,min_time:], direction = 'forward')
+#               if plot_forward:
+#                   plot_dots_close(reco,latent_dyn[:,min_time:], range_close =range_close, conf_int = 0.05, ax =ax_percent[1,0], color =colors[:,with_subs[0]] , label = with_subs[0])
               
-          elif len(without) == 1:
+#           elif len(without) == 1:
 
-              stored_contri['Loss without'].iloc[without[0],:] =  calcul_contribution(reco, latent_dyn[:,min_time:], direction = 'backward')
-              if plot_backward:
-                  plot_dots_close(reco,latent_dyn[:,min_time:], range_close =range_close, conf_int = 0.25, ax =ax_percent[1,1], color =colors[:,without[0]] , label = without[0])          
-      ## Plot
-      if to_plot:
-        if color_sig_type == 'mse': 
-            color_sig = np.mean(np.abs(reco-latent_dyn[:,min_time:]),0)
-            color_by_dominant = False
-        elif color_sig_type == 'coeffs':
-             color_sig =with_subs# np.array(with_subs)
-             color_by_dominant = True
-        else:
-            color_sig =[]
-            color_by_dominant = False
-        h = visualize_dyn(reco, ax[group_num, without_num], params_plot, color_sig= color_sig, return_fig = True, colors_dyns = [], color_by_dominant = color_by_dominant, coefficients =coeffs_run  ,cmap = cmap, colors = [], vmin = 0, vmax = coefficients.shape[0])
+#               stored_contri['Loss without'].iloc[without[0],:] =  calcul_contribution(reco, latent_dyn[:,min_time:], direction = 'backward')
+#               if plot_backward:
+#                   plot_dots_close(reco,latent_dyn[:,min_time:], range_close =range_close, conf_int = 0.25, ax =ax_percent[1,1], color =colors[:,without[0]] , label = without[0])          
+#       ## Plot
+#       if to_plot:
+#         if color_sig_type == 'mse': 
+#             color_sig = np.mean(np.abs(reco-latent_dyn[:,min_time:]),0)
+#             color_by_dominant = False
+#         elif color_sig_type == 'coeffs':
+#              color_sig =with_subs# np.array(with_subs)
+#              color_by_dominant = True
+#         else:
+#             color_sig =[]
+#             color_by_dominant = False
+#         h = visualize_dyn(reco, ax[group_num, without_num], params_plot, color_sig= color_sig, return_fig = True, colors_dyns = [], color_by_dominant = color_by_dominant, coefficients =coeffs_run  ,cmap = cmap, colors = [], vmin = 0, vmax = coefficients.shape[0])
 
-        if len(params_plot) > 0:
-          add_labels(ax[group_num, without_num], xlabel=params_plot.get('xlabel'), ylabel=params_plot.get('ylabel'), zlabel=params_plot.get('zlabel'), title=params_plot.get('title'),
-            xlim = params_plot.get('xlim'), ylim  =params_plot.get('ylim'), zlim =params_plot.get('zlim'))
-        else:
+#         if len(params_plot) > 0:
+#           add_labels(ax[group_num, without_num], xlabel=params_plot.get('xlabel'), ylabel=params_plot.get('ylabel'), zlabel=params_plot.get('zlabel'), title=params_plot.get('title'),
+#             xlim = params_plot.get('xlim'), ylim  =params_plot.get('ylim'), zlim =params_plot.get('zlim'))
+#         else:
 
-          if latent_dyn.shape[0] == 3:
-              add_labels(ax[group_num, without_num], title = name_store + ' rMSE: '+'%g'%mse_without ,
-                         xlim = [np.min(latent_dyn[0,:])-2,np.max(latent_dyn[0,:])+2],
-                         ylim =[np.min(latent_dyn[1,:])-2,np.max(latent_dyn[1,:])+2], zlim =[np.min(latent_dyn[2,:])-2,np.max(latent_dyn[2,:])+2])
-          else:
-              add_labels(ax[group_num, without_num], title = name_store + ' rMSE: '+'%g'%mse_without ,
-                         xlim = [np.min(latent_dyn[0,:])-2,np.max(latent_dyn[0,:])+2],
-                         ylim =[np.min(latent_dyn[1,:])-2,np.max(latent_dyn[1,:])+2], zlabel = None)
+#           if latent_dyn.shape[0] == 3:
+#               add_labels(ax[group_num, without_num], title = name_store + ' rMSE: '+'%g'%mse_without ,
+#                          xlim = [np.min(latent_dyn[0,:])-2,np.max(latent_dyn[0,:])+2],
+#                          ylim =[np.min(latent_dyn[1,:])-2,np.max(latent_dyn[1,:])+2], zlim =[np.min(latent_dyn[2,:])-2,np.max(latent_dyn[2,:])+2])
+#           else:
+#               add_labels(ax[group_num, without_num], title = name_store + ' rMSE: '+'%g'%mse_without ,
+#                          xlim = [np.min(latent_dyn[0,:])-2,np.max(latent_dyn[0,:])+2],
+#                          ylim =[np.min(latent_dyn[1,:])-2,np.max(latent_dyn[1,:])+2], zlabel = None)
 
-            #[ax_spec.axis('off') for ax_num,ax_spec in enumerate(ax.flatten()) if ax_num > without_num]
-    [ax_spec.axis('off') for ax_num,ax_spec in enumerate(ax[group_num, :]) if ax_num > without_num]
-  fig.suptitle(title_fig);
-  if include_colorbar:
-      fig.subplots_adjust(right=0.7)
-      cbar_ax = fig.add_axes([0.9, 0.15, 0.02, 0.7])
-      fig.colorbar(h, cax=cbar_ax)
-  if store_data: 
-      if plot_percent:
-          ax_percent[1,0].legend()
-          ax_percent[1,1].legend()
-          return stored_contri, dict_store, h, ax_percent,fig_percent
-      return stored_contri, dict_store, h
-  return dict_store, h
+#             #[ax_spec.axis('off') for ax_num,ax_spec in enumerate(ax.flatten()) if ax_num > without_num]
+#     [ax_spec.axis('off') for ax_num,ax_spec in enumerate(ax[group_num, :]) if ax_num > without_num]
+#   fig.suptitle(title_fig);
+#   if include_colorbar:
+#       fig.subplots_adjust(right=0.7)
+#       cbar_ax = fig.add_axes([0.9, 0.15, 0.02, 0.7])
+#       fig.colorbar(h, cax=cbar_ax)
+#   if store_data: 
+#       if plot_percent:
+#           ax_percent[1,0].legend()
+#           ax_percent[1,1].legend()
+#           return stored_contri, dict_store, h, ax_percent,fig_percent
+#       return stored_contri, dict_store, h
+#   return dict_store, h
 
-def check_eigenspaces(F, colors = [],figsize = (15,8), ax = [], title2 = 'Eigenspaces of different sub-dynamics',title1= 'Eigenvalues of different sub-dynamics'):
-  fig = plt.figure(figsize = figsize)
-  ax1 = fig.add_subplot(121)
-  if np.shape(F[0])[0] == 3:
-      ax2 = fig.add_subplot(122, projection='3d')
-  else:
-      ax2 = fig.add_subplot(122)
-  if len(colors) == 0:
-    colors = np.random.rand(3,len(F))
-  evals_list = []
-  evecs_list = []
-  for f_num, f_i in enumerate(F):
-    if isinstance(colors,np.ndarray):
-      cur_color =  [list(colors[:,f_num])]
-    else:
-      cur_color = colors[f_num]
-    eigenvalues, eigenvectors =  linalg.eig(f_i)
-    evals_list.append(eigenvalues)
-    evecs_list.append(eigenvectors)
-    ax1.scatter(np.real(eigenvalues),np.imag(eigenvalues),marker = 'o', c =cur_color, label = 'G%g'%f_num)
-    eigenvectors_real = np.real(eigenvectors)
+# def check_eigenspaces(F, colors = [],figsize = (15,8), ax = [], title2 = 'Eigenspaces of different sub-dynamics',title1= 'Eigenvalues of different sub-dynamics'):
+#   fig = plt.figure(figsize = figsize)
+#   ax1 = fig.add_subplot(121)
+#   if np.shape(F[0])[0] == 3:
+#       ax2 = fig.add_subplot(122, projection='3d')
+#   else:
+#       ax2 = fig.add_subplot(122)
+#   if len(colors) == 0:
+#     colors = np.random.rand(3,len(F))
+#   evals_list = []
+#   evecs_list = []
+#   for f_num, f_i in enumerate(F):
+#     if isinstance(colors,np.ndarray):
+#       cur_color =  [list(colors[:,f_num])]
+#     else:
+#       cur_color = colors[f_num]
+#     eigenvalues, eigenvectors =  linalg.eig(f_i)
+#     evals_list.append(eigenvalues)
+#     evecs_list.append(eigenvectors)
+#     ax1.scatter(np.real(eigenvalues),np.imag(eigenvalues),marker = 'o', c =cur_color, label = 'G%g'%f_num)
+#     eigenvectors_real = np.real(eigenvectors)
 
-    if eigenvectors_real.shape[0] == 3:
-        ax2.scatter( eigenvectors_real[0,:],eigenvectors_real[1,:], eigenvectors_real[2,:],marker = 'o', c = cur_color, label = 'G%g'%f_num)
-    elif eigenvectors_real.shape[0] == 2:
-        ax2.scatter( eigenvectors_real[0,:],eigenvectors_real[1,:],marker = 'o', c = cur_color, label = 'G%g'%f_num)
+#     if eigenvectors_real.shape[0] == 3:
+#         ax2.scatter( eigenvectors_real[0,:],eigenvectors_real[1,:], eigenvectors_real[2,:],marker = 'o', c = cur_color, label = 'G%g'%f_num)
+#     elif eigenvectors_real.shape[0] == 2:
+#         ax2.scatter( eigenvectors_real[0,:],eigenvectors_real[1,:],marker = 'o', c = cur_color, label = 'G%g'%f_num)
 
-    # 1. create vertices from points
-    if eigenvectors_real.shape[0] == 3:
-        verts = [list(zip(eigenvectors_real[0,:],eigenvectors_real[1,:],eigenvectors_real[2,:]))]
-    if eigenvectors_real.shape[0] == 2:
-        verts = [list(zip(eigenvectors_real[0,:],eigenvectors_real[1,:]))]
-    srf = Poly3DCollection(verts, alpha=.25, facecolor= cur_color)
-    # 3. add polygon to the figure (current axes)
-    ax2.add_collection3d(srf)
-  add_labels(ax2, title=title2)
-  add_labels(ax1, xlabel='Real', ylabel = 'Img',zlabel =None,  title=title1)
+#     # 1. create vertices from points
+#     if eigenvectors_real.shape[0] == 3:
+#         verts = [list(zip(eigenvectors_real[0,:],eigenvectors_real[1,:],eigenvectors_real[2,:]))]
+#     if eigenvectors_real.shape[0] == 2:
+#         verts = [list(zip(eigenvectors_real[0,:],eigenvectors_real[1,:]))]
+#     srf = Poly3DCollection(verts, alpha=.25, facecolor= cur_color)
 
-  return evecs_list,evals_list
-def add_arrow(ax, start, end,arrowprops = {'facecolor' : 'black', 'width':1, 'alpha' :0.2} ):
-    arrowprops = {**{'facecolor' : 'black', 'width':1.5, 'alpha' :0.2, 'edgecolor':'none'}, **arrowprops}
-    ax.annotate('',ha = 'center', va = 'bottom',  xytext = start,xy =end,
-                arrowprops = arrowprops)
+#     ax2.add_collection3d(srf)
+#   add_labels(ax2, title=title2)
+#   add_labels(ax1, xlabel='Real', ylabel = 'Img',zlabel =None,  title=title1)
+
+#   return evecs_list,evals_list
+
+
+# def add_arrow(ax, start, end,arrowprops = {'facecolor' : 'black', 'width':1, 'alpha' :0.2} ):
+#     arrowprops = {**{'facecolor' : 'black', 'width':1.5, 'alpha' :0.2, 'edgecolor':'none'}, **arrowprops}
+#     ax.annotate('',ha = 'center', va = 'bottom',  xytext = start,xy =end,
+#                 arrowprops = arrowprops)
 
     
     
@@ -1099,7 +1098,7 @@ def plot_sub_effect(sub_dyn, rec_rad_all = 5, colors = ['r','g','b','m'], alpha 
         ax.plot([rec_rad,  rec_rad],[-rec_rad,rec_rad],alpha = alpha**2, color = colors[2], ls = '--',lw=lw)
         ax.plot([-rec_rad,-rec_rad], [ -rec_rad,  rec_rad],alpha = alpha**2, color = colors[3], ls = '--',lw=lw)
     
-        #sub_dyn = sub_dyn - np.eye(len(sub_dyn))
+
         if not (sub_dyn == 0).all():
             sub_dyn = norm_mat(sub_dyn, type_norm = 'evals')
         effect_up = sub_dyn @ np.vstack([np.linspace(-rec_rad, rec_rad, n_points), [rec_rad]*n_points])
@@ -1116,9 +1115,7 @@ def plot_sub_effect(sub_dyn, rec_rad_all = 5, colors = ['r','g','b','m'], alpha 
         add_arrow(ax, [rec_rad,0], [np.mean(effect_right[0,:]),np.mean(effect_right[1,:])],arrowprops = {'facecolor' :colors[2]})
         add_arrow(ax, [-rec_rad,0], [np.mean(effect_left[0,:]),np.mean(effect_left[1,:])],arrowprops = {'facecolor' :colors[3]})
     add_labels(ax, **params_labels)
-            #else:
-    #    ax.scatter([0,0],[0,0], alpha = alpha)
-    #ax.set_xlim([-15,15])
+
 
     
 
@@ -1272,249 +1269,249 @@ def plot_subs(F, axs = [],params_F_plot = {'cmap':'PiYG'}, include_sup = True,an
   plt.subplots_adjust(hspace = 0.5,wspace = 0.5)
 
 
-def angle_between(A,B):
-    """
-    Calculate the angle between the matrices A and B
-    """
-    trace_AB = np.trace(A.T @ B)
-    deno = np.sqrt(np.sum(A**2)*np.sum(B**2))
-    angle = np.arccos(trace_AB/deno)
-    return angle
+# def angle_between(A,B):
+#     """
+#     Calculate the angle between the matrices A and B
+#     """
+#     trace_AB = np.trace(A.T @ B)
+#     deno = np.sqrt(np.sum(A**2)*np.sum(B**2))
+#     angle = np.arccos(trace_AB/deno)
+#     return angle
 
 
 #%% Analysis Functions
 
 
 
-def check_denoising(latent_dyn,F, noise_min = 0, noise_max = 10,noise_intervals = 1, params_update_c ={}, 
-                    r_seed = 0, pre_defined = [],return_recos = True, n_samples = 5,accumulation=False,type_add = 'extend' ):
-  """
-  Check the model ability to denoise OR create noisy data
-  pre_defined = noises to add
-  """
-  np.random.seed(r_seed)
-  if len(pre_defined) == 0 and n_samples == 1:    
-    pre_defined = np.arange(noise_min, noise_max, noise_intervals)
-    noise_original = [latent_dyn+sigma*np.random.randn(latent_dyn.shape[0],latent_dyn.shape[1] )  for sigma in pre_defined]
+# def check_denoising(latent_dyn,F, noise_min = 0, noise_max = 10,noise_intervals = 1, params_update_c ={}, 
+#                     r_seed = 0, pre_defined = [],return_recos = True, n_samples = 5,accumulation=False,type_add = 'extend' ):
+#   """
+#   Check the model ability to denoise OR create noisy data
+#   pre_defined = noises to add
+#   """
+#   np.random.seed(r_seed)
+#   if len(pre_defined) == 0 and n_samples == 1:    
+#     pre_defined = np.arange(noise_min, noise_max, noise_intervals)
+#     noise_original = [latent_dyn+sigma*np.random.randn(latent_dyn.shape[0],latent_dyn.shape[1] )  for sigma in pre_defined]
       
-  else:
-    if len(pre_defined) == 0: pre_defined = np.arange(noise_min, noise_max, noise_intervals)
-    # if len(pre_defined) == 1: 
-    #     pre_defined = pre_defined*n_samples
-    #     change_seed = True
-    # else:
-    #     change_seed = False
-    noise_original = []
-    for noise_counter, sigma in enumerate(pre_defined):
-      noise_per_noise = []
-      for repeat in range(n_samples):        
-        np.random.seed(noise_counter*repeat)
-        noise_per_noise.append(latent_dyn+sigma*np.random.randn(latent_dyn.shape[0],latent_dyn.shape[1] )) 
-      if type_add == 'extend':
-          noise_original.extend(noise_per_noise)
-      else:
-          noise_original.append(noise_per_noise)
-  if return_recos:         
-    noise_recos = [create_reco(latent_dyn,update_c(F,noise_original[sigma_num],params_update_c),F, accumulation=accumulation) for sigma_num, sigma in enumerate(pre_defined)]  
-    return noise_recos, noise_original, np.arange(noise_min, noise_max, noise_intervals)
-  else:
-    return noise_original
+#   else:
+#     if len(pre_defined) == 0: pre_defined = np.arange(noise_min, noise_max, noise_intervals)
+#     # if len(pre_defined) == 1: 
+#     #     pre_defined = pre_defined*n_samples
+#     #     change_seed = True
+#     # else:
+#     #     change_seed = False
+#     noise_original = []
+#     for noise_counter, sigma in enumerate(pre_defined):
+#       noise_per_noise = []
+#       for repeat in range(n_samples):        
+#         np.random.seed(noise_counter*repeat)
+#         noise_per_noise.append(latent_dyn+sigma*np.random.randn(latent_dyn.shape[0],latent_dyn.shape[1] )) 
+#       if type_add == 'extend':
+#           noise_original.extend(noise_per_noise)
+#       else:
+#           noise_original.append(noise_per_noise)
+#   if return_recos:         
+#     noise_recos = [create_reco(latent_dyn,update_c(F,noise_original[sigma_num],params_update_c),F, accumulation=accumulation) for sigma_num, sigma in enumerate(pre_defined)]  
+#     return noise_recos, noise_original, np.arange(noise_min, noise_max, noise_intervals)
+#   else:
+#     return noise_original
 
 
-def check_speed_vary(F,dynamic_type = 'cyl',max_time = 500, dt = 0.01, change_speed = True, t_speed = np.exp, axis_speed = [0,1,2],params =  {'exp_power':0.1}):
-        speed_dyn = create_dynamics(type_dyn =dynamic_type, max_time = max_time, dt = dt, change_speed = change_speed, t_speed = t_speed, axis_speed = axis_speed,params_ex =  params)
-        #speed_dyn = create_dynamics(type_dyn = dynamic_type, max_time = max_time, dt = dt, change_speed = True, t_speed = np.exp, axis_speed = axis_speed,params = {'exp_power':exp_power})
-        new_c = update_c(F,speed_dyn,{})
-        reco_speed = create_reco(speed_dyn, new_c,F)
-        return speed_dyn, reco_speed, new_c
+# def check_speed_vary(F,dynamic_type = 'cyl',max_time = 500, dt = 0.01, change_speed = True, t_speed = np.exp, axis_speed = [0,1,2],params =  {'exp_power':0.1}):
+#         speed_dyn = create_dynamics(type_dyn =dynamic_type, max_time = max_time, dt = dt, change_speed = change_speed, t_speed = t_speed, axis_speed = axis_speed,params_ex =  params)
+#         #speed_dyn = create_dynamics(type_dyn = dynamic_type, max_time = max_time, dt = dt, change_speed = True, t_speed = np.exp, axis_speed = axis_speed,params = {'exp_power':exp_power})
+#         new_c = update_c(F,speed_dyn,{})
+#         reco_speed = create_reco(speed_dyn, new_c,F)
+#         return speed_dyn, reco_speed, new_c
 
-def check_dist_between_subs(F, to_norm_mse = True, F_compare = [])  :
-  """
-  mse etc
-  """
-  ##
-  if len(F_compare) == 0:
-    F_compare = F
-  store_dict = {'mat':{key:np.nan*np.ones((len(F),len(F))) for key in ['rMSE','CORR','msePART','ANGLE']},
-                'list':{key:[] for key in ['rMSE','CORR','msePART','ANGLE']} }
+# def check_dist_between_subs(F, to_norm_mse = True, F_compare = [])  :
+#   """
+#   mse etc
+#   """
+#   ##
+#   if len(F_compare) == 0:
+#     F_compare = F
+#   store_dict = {'mat':{key:np.nan*np.ones((len(F),len(F))) for key in ['rMSE','CORR','msePART','ANGLE']},
+#                 'list':{key:[] for key in ['rMSE','CORR','msePART','ANGLE']} }
 
-  combinations = list(itertools.combinations(np.arange(len(F)), 2))
-  for comb in combinations:
-    store_dict = compute_dist_2_mat(F[comb[0]],F[comb[1]], to_norm_mse = True, rank_digits = 2, store_dict = store_dict, ind1 =comb[0] ,ind2 = comb[1])
+#   combinations = list(itertools.combinations(np.arange(len(F)), 2))
+#   for comb in combinations:
+#     store_dict = compute_dist_2_mat(F[comb[0]],F[comb[1]], to_norm_mse = True, rank_digits = 2, store_dict = store_dict, ind1 =comb[0] ,ind2 = comb[1])
   
-  return store_dict, combinations
+#   return store_dict, combinations
 
-def compute_participation_factor(mat):
-  w, vl, vr = linalg.eig(mat, left=True)
-  part_factor  = np.hstack([np.abs(vl[:,w_i_num]*vr[:,w_i_num]).reshape((-1,1)) for w_i_num, w_i in enumerate(w) ])
-  return part_factor
-
-
-def compute_dist_2_mat(mat1,mat2, to_norm_mse = True, rank_digits = 4, store_dict = {}, ind1 = -1, ind2 = -1):
-  """
-  Computing the distance between a pair of matrices
-  unique_rank: the bigger this value is, the more similar the matrices are
-  """
-  to_store = (ind1 >= 0) and (ind2 >= 0)
-  metric_list = ['rMSE','CORR','msePART','ANGLE']
-  vals_dict = {metric: None for metric in metric_list}
-  if to_store and len(store_dict) == 0:
-    store_dict = {key:np.nan*np.ones((ind1,ind2)) for key in metric_list}
-  # MSE
-  if to_norm_mse:
-    mat1norm = (mat1 - np.mean(mat1))/np.std(mat1)
-    mat2norm = (mat2 - np.mean(mat2))/np.std(mat2)
-  else:
-    mat1norm = mat1; mat2norm = mat2
-  mse = (np.mean((mat1norm - mat2norm)**2))**0.5
-  if to_store: vals_dict['rMSE'] = mse
-  # Corr
-  corr_mat = np.corrcoef(mat1.flatten(),mat2.flatten())
-  corr = np.abs(corr_mat[0,1])
-  if to_store: vals_dict['CORR'] = corr
-  #angle
-  angle = angle_between(mat1,mat2)
-  if to_store: vals_dict['ANGLE'] = angle
-
-  part1 = compute_participation_factor(mat1) 
-  part2 = compute_participation_factor(mat2)
-  mse_part = np.mean((part1 - part2)**2)
-  if to_store: vals_dict['msePART'] = mse_part
-
-  if to_store: 
-    for  metric in metric_list:
-      store_dict['mat'][metric][ind1,ind2] = vals_dict[metric] 
-      store_dict['list'][metric].append(vals_dict[metric] )
-    return store_dict    
-  return mse, corr, angle, mse_part # shared_rank
-
-def spec_corr(v1,v2):
-  """
-  absolute value of correlation
-  """
-  corr = np.corrcoef(v1[:],v2[:])
-  return np.abs(corr[0,1])
+# def compute_participation_factor(mat):
+#   w, vl, vr = linalg.eig(mat, left=True)
+#   part_factor  = np.hstack([np.abs(vl[:,w_i_num]*vr[:,w_i_num]).reshape((-1,1)) for w_i_num, w_i in enumerate(w) ])
+#   return part_factor
 
 
-def calculte_DTWvsF(F_dist_mat,c_dist_mat):
-  """
-  Calculate DTW between coefficients versus the distance between sub-dynamics
-  """
-  np.fill_diagonal(F_dist_mat, np.nan)
-  np.fill_diagonal(c_dist_mat, np.nan)
+# def compute_dist_2_mat(mat1,mat2, to_norm_mse = True, rank_digits = 4, store_dict = {}, ind1 = -1, ind2 = -1):
+#   """
+#   Computing the distance between a pair of matrices
+#   unique_rank: the bigger this value is, the more similar the matrices are
+#   """
+#   to_store = (ind1 >= 0) and (ind2 >= 0)
+#   metric_list = ['rMSE','CORR','msePART','ANGLE']
+#   vals_dict = {metric: None for metric in metric_list}
+#   if to_store and len(store_dict) == 0:
+#     store_dict = {key:np.nan*np.ones((ind1,ind2)) for key in metric_list}
+#   # MSE
+#   if to_norm_mse:
+#     mat1norm = (mat1 - np.mean(mat1))/np.std(mat1)
+#     mat2norm = (mat2 - np.mean(mat2))/np.std(mat2)
+#   else:
+#     mat1norm = mat1; mat2norm = mat2
+#   mse = (np.mean((mat1norm - mat2norm)**2))**0.5
+#   if to_store: vals_dict['rMSE'] = mse
+#   # Corr
+#   corr_mat = np.corrcoef(mat1.flatten(),mat2.flatten())
+#   corr = np.abs(corr_mat[0,1])
+#   if to_store: vals_dict['CORR'] = corr
+#   #angle
+#   angle = angle_between(mat1,mat2)
+#   if to_store: vals_dict['ANGLE'] = angle
 
-  return {'F_dist':F_dist_mat.flatten(),'c_dist': c_dist_mat.flatten()}
-def compute_DTW(vec1, vec2, options = {'window_size': 0.5}, method = 'sakoechiba' ):
-  """
-  Calculate DTW between 2 time signals
-  """
-  return dtw(vec1, vec2, method=method, options=options)
+#   part1 = compute_participation_factor(mat1) 
+#   part2 = compute_participation_factor(mat2)
+#   mse_part = np.mean((part1 - part2)**2)
+#   if to_store: vals_dict['msePART'] = mse_part
 
-def compute_distance_between_c(c_mat1, c_mat2 = [], normalize_c = True, func =spec_corr , pairs = [], type_return = 'mat'):
-  """
-  Compute distance between time coefficients (c)
-  """
-  if normalize_c:
-    c_mat1 = (c_mat1 -np.mean(c_mat1,1).reshape((-1,1)))/np.std(c_mat1,1).reshape((-1,1))
-    if len(c_mat2) > 0:
-      c_mat2 = (c_mat2 -np.mean(c_mat2,1).reshape((-1,1)))/np.std(c_mat2,1).reshape((-1,1))
-  if len(c_mat2) == 0: 
-    if len(pairs) == 0:
-      pairs = list(itertools.combinations(np.arange(np.shape(c_mat1)[0]),2))
-    dtw_dists = [func(c_mat1[pair[0],:],c_mat1[pair[1],:]) for pair in pairs]
-    if type_return == 'mat':
-      distance_mat = np.zeros((c_mat1.shape[0],c_mat1.shape[0]))
-    else:
-      distance_mat =[]
-    for count_dist, dist_u in enumerate(dtw_dists):
-      pair = pairs[count_dist]
-      if type_return == 'mat':
-        distance_mat[pair[0], pair[1]] = dist_u
-        distance_mat[pair[1], pair[0]] = dist_u
-      else:
-        distance_mat.append(dist_u)
-  else:
-    if len(pairs) == 0:
-      pairs = list(itertools.product(np.arange(np.shape(c_mat1)[0]),np.arange(np.shape(c_mat2)[0])))
-    dtw_dists = [func(c_mat1[pair[0],:],c_mat2[pair[1],:]) for pair in pairs]
-    if type_return == 'mat':
-      distance_mat = np.empty((c_mat1.shape[0],c_mat2.shape[0]))
-    else:
-      distance_mat = []
-    for count_dist, dist_u in enumerate(dtw_dists):
-      pair = pairs[count_dist]
-      if type_return == 'mat':
-        distance_mat[pair[0], pair[1]] = dist_u
-      else:
-        distance_mat.append(dist_u)
-  return distance_mat
+#   if to_store: 
+#     for  metric in metric_list:
+#       store_dict['mat'][metric][ind1,ind2] = vals_dict[metric] 
+#       store_dict['list'][metric].append(vals_dict[metric] )
+#     return store_dict    
+#   return mse, corr, angle, mse_part # shared_rank
+
+# def spec_corr(v1,v2):
+#   """
+#   absolute value of correlation
+#   """
+#   corr = np.corrcoef(v1[:],v2[:])
+#   return np.abs(corr[0,1])
 
 
-  
+# def calculte_DTWvsF(F_dist_mat,c_dist_mat):
+#   """
+#   Calculate DTW between coefficients versus the distance between sub-dynamics
+#   """
+#   np.fill_diagonal(F_dist_mat, np.nan)
+#   np.fill_diagonal(c_dist_mat, np.nan)
+
+#   return {'F_dist':F_dist_mat.flatten(),'c_dist': c_dist_mat.flatten()}
+# def compute_DTW(vec1, vec2, options = {'window_size': 0.5}, method = 'sakoechiba' ):
+#   """
+#   Calculate DTW between 2 time signals
+#   """
+#   return dtw(vec1, vec2, method=method, options=options)
+
+# def compute_distance_between_c(c_mat1, c_mat2 = [], normalize_c = True, func =spec_corr , pairs = [], type_return = 'mat'):
+#   """
+#   Compute distance between time coefficients (c)
+#   """
+#   if normalize_c:
+#     c_mat1 = (c_mat1 -np.mean(c_mat1,1).reshape((-1,1)))/np.std(c_mat1,1).reshape((-1,1))
+#     if len(c_mat2) > 0:
+#       c_mat2 = (c_mat2 -np.mean(c_mat2,1).reshape((-1,1)))/np.std(c_mat2,1).reshape((-1,1))
+#   if len(c_mat2) == 0: 
+#     if len(pairs) == 0:
+#       pairs = list(itertools.combinations(np.arange(np.shape(c_mat1)[0]),2))
+#     dtw_dists = [func(c_mat1[pair[0],:],c_mat1[pair[1],:]) for pair in pairs]
+#     if type_return == 'mat':
+#       distance_mat = np.zeros((c_mat1.shape[0],c_mat1.shape[0]))
+#     else:
+#       distance_mat =[]
+#     for count_dist, dist_u in enumerate(dtw_dists):
+#       pair = pairs[count_dist]
+#       if type_return == 'mat':
+#         distance_mat[pair[0], pair[1]] = dist_u
+#         distance_mat[pair[1], pair[0]] = dist_u
+#       else:
+#         distance_mat.append(dist_u)
+#   else:
+#     if len(pairs) == 0:
+#       pairs = list(itertools.product(np.arange(np.shape(c_mat1)[0]),np.arange(np.shape(c_mat2)[0])))
+#     dtw_dists = [func(c_mat1[pair[0],:],c_mat2[pair[1],:]) for pair in pairs]
+#     if type_return == 'mat':
+#       distance_mat = np.empty((c_mat1.shape[0],c_mat2.shape[0]))
+#     else:
+#       distance_mat = []
+#     for count_dist, dist_u in enumerate(dtw_dists):
+#       pair = pairs[count_dist]
+#       if type_return == 'mat':
+#         distance_mat[pair[0], pair[1]] = dist_u
+#       else:
+#         distance_mat.append(dist_u)
+#   return distance_mat
 
 
-def plot_FvsC(F_dist_mat,c_dist_mat,ax = []):
-  """
-  Plot the distance between the sub-dynamics versus the distance between the corresponding cofficients. 
-  Inputs: 
-      F = list of sub-dynamics (each is a np.array of k X k)
-      c_mat = numpy array k X T 
-  """
-
-  c_dist_mat = np.array(c_dist_mat)
-  if isinstance(ax, list):
-    if len(ax) == 0:
-      fig, ax = plt.subplots()
-  if (F_dist_mat != F_dist_mat.T).any():
-    F_dist_mat = 0.5*np.nansum(np.dstack([F_dist_mat , F_dist_mat.T]),2)
-
-
-  if not (c_dist_mat == c_dist_mat.T).all():
-
-    c_dist_mat = 0.5*np.nansum(np.dstack([c_dist_mat , c_dist_mat.T]),2)
-
-  #c_dist_mat = 
-  np.fill_diagonal(c_dist_mat,np.nan)
-
-  np.fill_diagonal(F_dist_mat,np.nan)
-  dict_dist = calculte_DTWvsF(F_dist_mat,c_dist_mat)
-  nonan_map = np.isnan(dict_dist['F_dist'] ) == False
-  linear_model=np.polyfit(dict_dist['c_dist'][nonan_map], dict_dist['F_dist'][nonan_map],1)
-  linear_model_fn=np.poly1d(linear_model)
-
-  ax.plot(dict_dist['c_dist'][nonan_map],linear_model_fn(dict_dist['c_dist'][nonan_map]),color="green", alpha = 0.4, ls = '--')
-
-  ax.scatter(dict_dist['c_dist'][nonan_map], dict_dist['F_dist'][nonan_map], 100)
-
-def plot_fit(x,y):
-  """
-  Find a linear regression fit in the form of y = bx + c
-  """
-  linear_model=np.polyfit(x, y,1)
-  linear_model_fn=np.poly1d(linear_model)
-
-  return x, linear_model_fn(x)
-
-
-
-def create_dict_dist_c(coefficients, combs = [] , store_dict_c = {}, metrics = ['corr','DTW']):
-  """
-  Creates a dictionary with information regarding the distance between coefficients (c) of different sub-dynamics
-  """
-  if len(combs) == 0:    combs = list(itertools.combinations(np.arange(np.shape(coefficients)[0]),2))
-
-  if 'corr' in metrics:  store_dict_c['corr'] =  compute_distance_between_c(coefficients,pairs = combs, func = spec_corr,type_return = 'list')
-  if 'DTW' in metrics:  store_dict_c['DTW'] =  compute_distance_between_c(coefficients,pairs = combs, func = compute_DTW,type_return = 'list')
-  return store_dict_c
   
 
-def cross_corr_c(coefficients, combs = [] ):
-  """
-  Calculate the cross-correlation between coefficients
-  """
-  if len(combs) == 0:    combs = list(itertools.combinations(np.arange(np.shape(coefficients)[0]),2))
-  coeffs_corr = np.vstack([np.correlate(coefficients[pair[0],:], coefficients[pair[1],:], 'same').reshape((1,-1)) for pair in combs])
-  return coeffs_corr, combs
+
+# def plot_FvsC(F_dist_mat,c_dist_mat,ax = []):
+#   """
+#   Plot the distance between the sub-dynamics versus the distance between the corresponding cofficients. 
+#   Inputs: 
+#       F = list of sub-dynamics (each is a np.array of k X k)
+#       c_mat = numpy array k X T 
+#   """
+
+#   c_dist_mat = np.array(c_dist_mat)
+#   if isinstance(ax, list):
+#     if len(ax) == 0:
+#       fig, ax = plt.subplots()
+#   if (F_dist_mat != F_dist_mat.T).any():
+#     F_dist_mat = 0.5*np.nansum(np.dstack([F_dist_mat , F_dist_mat.T]),2)
+
+
+#   if not (c_dist_mat == c_dist_mat.T).all():
+
+#     c_dist_mat = 0.5*np.nansum(np.dstack([c_dist_mat , c_dist_mat.T]),2)
+
+#   #c_dist_mat = 
+#   np.fill_diagonal(c_dist_mat,np.nan)
+
+#   np.fill_diagonal(F_dist_mat,np.nan)
+#   dict_dist = calculte_DTWvsF(F_dist_mat,c_dist_mat)
+#   nonan_map = np.isnan(dict_dist['F_dist'] ) == False
+#   linear_model=np.polyfit(dict_dist['c_dist'][nonan_map], dict_dist['F_dist'][nonan_map],1)
+#   linear_model_fn=np.poly1d(linear_model)
+
+#   ax.plot(dict_dist['c_dist'][nonan_map],linear_model_fn(dict_dist['c_dist'][nonan_map]),color="green", alpha = 0.4, ls = '--')
+
+#   ax.scatter(dict_dist['c_dist'][nonan_map], dict_dist['F_dist'][nonan_map], 100)
+
+# def plot_fit(x,y):
+#   """
+#   Find a linear regression fit in the form of y = bx + c
+#   """
+#   linear_model=np.polyfit(x, y,1)
+#   linear_model_fn=np.poly1d(linear_model)
+
+#   return x, linear_model_fn(x)
+
+
+
+# def create_dict_dist_c(coefficients, combs = [] , store_dict_c = {}, metrics = ['corr','DTW']):
+#   """
+#   Creates a dictionary with information regarding the distance between coefficients (c) of different sub-dynamics
+#   """
+#   if len(combs) == 0:    combs = list(itertools.combinations(np.arange(np.shape(coefficients)[0]),2))
+
+#   if 'corr' in metrics:  store_dict_c['corr'] =  compute_distance_between_c(coefficients,pairs = combs, func = spec_corr,type_return = 'list')
+#   if 'DTW' in metrics:  store_dict_c['DTW'] =  compute_distance_between_c(coefficients,pairs = combs, func = compute_DTW,type_return = 'list')
+#   return store_dict_c
+  
+
+# def cross_corr_c(coefficients, combs = [] ):
+#   """
+#   Calculate the cross-correlation between coefficients
+#   """
+#   if len(combs) == 0:    combs = list(itertools.combinations(np.arange(np.shape(coefficients)[0]),2))
+#   coeffs_corr = np.vstack([np.correlate(coefficients[pair[0],:], coefficients[pair[1],:], 'same').reshape((1,-1)) for pair in combs])
+#   return coeffs_corr, combs
 
 
 def update_D(former_D, step_D , x, y, reg1 = 0, reg_f= 0, bias_out_val = []) :
