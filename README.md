@@ -18,7 +18,7 @@ _main function to train the model._
 #### Parameters:
       max_time         = Number of time points for the dynamics. Relevant only if data is empty;
       dt               =  time interval for the dynamics
-      dynamics_type    = type of the dynamics. Can be 'cyl', 'lorenz', 'multi_cyl', 'torus', 'circ2d', 'spiral'
+      dynamics_type    = type of the dynamics. Can be 'cyl', 'lorenz','FHN', 'multi_cyl', 'torus', 'circ2d', 'spiral'
       num_subdyns      = number of sub-dynamics
       error_reco       = intial error for the reconstruction (do not touch)
       data             = if one wants to use a pre define groud-truth dynamics. If not empty - it overwrites max_time, dt, and dynamics_type
