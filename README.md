@@ -4,15 +4,16 @@ Decomposed Linear Dynamical Systems (dLDS) for \newline  learning the latent com
 
 # Package Explanation
 ## Functions:
-1. train_model_include_D - main function to train the model
+##### 1. train_model_include_D:
+_main function to train the model._
 
-train_model_include_D(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_subdyns = 3, 
+**train_model_include_D**_(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_subdyns = 3, 
                           error_reco = np.inf,  data = [], step_f = 30, GD_decay = 0.85, max_error = 1e-3, 
                           max_iter = 3000, F = [], coefficients = [], params= {'update_c_type':'inv','reg_term':0,'smooth_term':0}, 
                           epsilon_error_change = 10**(-5), D = [], x_former =[], latent_dim = None, include_D  = False,step_D = 30, reg1=0,reg_f =0 , 
                           max_data_reco = 1e-3,  sigma_mix_f = 0.1,  action_along_time = 'median', to_print = True, seed = 0, seed_f = 0, 
                           normalize_eig  = True,  params_ex = {'radius':1, 'num_cyls': 5, 'bias':0,'exp_power':0.2}, 
-                          init_distant_F = False,max_corr = 0.1, decaying_reg = 1, other_params_c={}, include_last_up = False)
+                          init_distant_F = False,max_corr = 0.1, decaying_reg = 1, other_params_c={}, include_last_up = False)_
 
 #### Parameters:
       max_time         = Number of time points for the dynamics. Relevant only if data is empty;
@@ -48,3 +49,6 @@ train_model_include_D(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_subdyn
       decaying_reg           = decaying factor for the l1 regularization on the coefficients. If 1 - there is no decay. (should be a scalar in (0,1])
       other_params_c         = additional parameters for the update step of c
       include_last_up        = add another update step of the coefficients at the end
+      
+      
+    
