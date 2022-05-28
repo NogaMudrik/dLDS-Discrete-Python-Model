@@ -50,5 +50,5 @@ _main function to train the model._
       other_params_c         = additional parameters for the update step of c
       include_last_up        = add another update step of the coefficients at the end
       
-      
+* example call (for Lorenz, w. 3 operators):       train_model_include_D(10, 0.01, 'lorenz', 3, GD_decay = 0.99)
     
