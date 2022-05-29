@@ -1,8 +1,12 @@
 # Discrete-Python-Model---Decomposed-Linear-Dynamical-Systems-dLDS-paper
 Decomposed Linear Dynamical Systems (dLDS) for \newline  learning the latent components of neural dynamics
 
+# Outine:
+## A) Main Model Figues
+## B) Package and functions description
 
-# Package Explanation
+# B) Package and functions description
+
 ## Functions:
 ##### 1. train_model_include_D:
 _main function to train the model._
@@ -51,4 +55,29 @@ _main function to train the model._
       include_last_up        = add another update step of the coefficients at the end
       
 * example call (for Lorenz, w. 3 operators):       train_model_include_D(10, 0.01, 'lorenz', 3, GD_decay = 0.99)
-    
+
+
+
+
+     #### 2. create_reco: create the dynamics reconstruction using the operators and coefficients obtained by dLDS (F, c). 
+     
+     
+     **create_reco**_(latent_dyn,coefficients, F, type_find = 'median',min_far =10, smooth_coeffs = False,
+                smoothing_params = {'wind':5})_
+#### Parameters:                
+                  This function creates the reconstruction 
+  Inputs:
+      latent_dyn   = the ground truth latent dynamics
+      coefficients = the operators coefficients (c(t)_i)
+      F            = a list of transport operators (a list with M transport operators, 
+                                                    each is a square matrix, kXk, where k is the latent dynamics
+                                                    dimension )
+      type_find    = 'median'
+      min_far      = 10
+      smooth_coeffs= False
+      smoothing_params = {'wind':5}
+      
+  Outputs:
+      cur_reco    = dLDS reconstruction of the latent dynamics
+                
+                
