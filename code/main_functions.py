@@ -372,7 +372,7 @@ def train_model_include_D(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_su
   else:
       coefficients = update_c(F, latent_dyn, params,other_params=other_params_c)  
         
-  
+  print(error_reco_array)
   if not include_D: 
       D = [];
   return coefficients, F, latent_dyn, error_reco_array, D
