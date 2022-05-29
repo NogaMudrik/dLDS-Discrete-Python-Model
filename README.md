@@ -59,7 +59,8 @@ _main function to train the model._
 
 
 
-     #### 2. create_reco: create the dynamics reconstruction using the operators and coefficients obtained by dLDS (F, c). 
+     #### 2. create_reco: 
+    _ create the dynamics reconstruction using the operators and coefficients obtained by dLDS (F, c)._ 
      
      
      **create_reco**_(latent_dyn,coefficients, F, type_find = 'median',min_far =10, smooth_coeffs = False,
