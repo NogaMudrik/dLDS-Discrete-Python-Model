@@ -1,6 +1,6 @@
 """
 Decomposed Linear Dynamical Systems (dLDS) for learning the latent components of neural dynamics
-@author: noga mudrik
+@code author: noga mudrik
 """
 
 """
@@ -25,7 +25,10 @@ from colormap import rgb2hex
 from numpy.linalg import matrix_power
 from scipy.linalg import expm
 from sklearn import linear_model
-import pylops
+try:
+    import pylops
+except:
+    print('itertools was not uploaded')    
 import itertools
 
 # os and files loading imports
@@ -63,7 +66,7 @@ def cal_next_FHN(v,w, dt = 0.01, max_t = 300, I_ext = 0.5, b = 0.7, a = 0.8 , ta
     w_next = w + dt/tau*(v + a - b*w)
     return v_next, w_next
 
-#%% Lorenz Attractor dynamics definition  
+#%% Lorenz attractor dynamics definition  
     
 def lorenz(x, y, z, s=10, r=25, b=2.667):
     """
@@ -293,14 +296,14 @@ def train_model_include_D(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_su
   if not include_D:
       cur_reco              = create_reco(latent_dyn=latent_dyn, coefficients= coefficients, F=F)
 
-  if include_D:
-    data_reco_error  = np.inf
-  else:
-    data_reco_error = -np.inf
+  
+  data_reco_error  = np.inf
+  
     
   counter = 1
  
   error_reco_array = []
+
   while  data_reco_error > max_data_reco and (counter < max_iter):
       
     ### Store Iteration Results
@@ -361,6 +364,7 @@ def train_model_include_D(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_su
 
     counter += 1
     if counter == max_iter: print('Arrived to max iter')
+ 
 
   # Post training adjustments
   if include_last_up:
@@ -369,8 +373,9 @@ def train_model_include_D(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_su
       coefficients = update_c(F, latent_dyn, params,other_params=other_params_c)  
         
   
-  if not include_D: D = [];
-  if one_dyn:      return coefficients, F, latent_dyn, error_reco_array
+  if not include_D: 
+      D = [];
+  return coefficients, F, latent_dyn, error_reco_array, D
       
 
 def update_D(former_D, step_D , x, y, reg1 = 0, reg_f= 0) :
@@ -611,14 +616,14 @@ def update_c(F, latent_dyn,
 
     elif params_update_c['update_c_type'].lower() == 'fista' :
         Aop = pylops.MatrixMult(stacked_fx_full)
-        print('fista')
+        #print('fista')
         if 'threshkind' not in params_update_c: params_update_c['threshkind'] ='soft'
 
         coeffs = pylops.optimization.sparsity.FISTA(Aop, total_next_dyn_full.flatten(), niter=params_update_c['num_iters'],eps = params_update_c['reg_term'] , threshkind =  params_update_c.get('threshkind') )[0]
 
     elif params_update_c['update_c_type'].lower() == 'ista' :
-        print('ista')
-        #herehere try without warm start
+        #print('ista')
+
         if 'threshkind' not in params_update_c: params_update_c['threshkind'] ='soft'
         Aop = pylops.MatrixMult(stacked_fx_full)
         coeffs = pylops.optimization.sparsity.ISTA(Aop, total_next_dyn_full.flatten(), niter=params_update_c['num_iters'] , 
@@ -627,23 +632,22 @@ def update_c(F, latent_dyn,
         
         
     elif params_update_c['update_c_type'].lower() == 'omp' :
-        print('omp')
+        #print('omp')
         Aop = pylops.MatrixMult(stacked_fx_full)
         coeffs  = pylops.optimization.sparsity.OMP(Aop, total_next_dyn_full.flatten(), niter_outer=params_update_c['num_iters'], sigma=params_update_c['reg_term'])[0]
         
         
     elif params_update_c['update_c_type'].lower() == 'spgl1' :
-        print('spgl1')
+        #print('spgl1')
         Aop = pylops.MatrixMult(stacked_fx_full)
         coeffs = pylops.optimization.sparsity.SPGL1(Aop, total_next_dyn_full.flatten(),iter_lim = params_update_c['num_iters'],
                                                    tau = params_update_c['reg_term'])[0]
         
         
     elif params_update_c['update_c_type'].lower() == 'irls' :
-        print('irls')
+        #print('irls')
         Aop = pylops.MatrixMult(stacked_fx_full)
         
-        #herehere try without warm start
         coeffs = pylops.optimization.sparsity.IRLS(Aop, total_next_dyn_full.flatten(),  nouter=50, espI = params_update_c['reg_term'])[0]
 
         
