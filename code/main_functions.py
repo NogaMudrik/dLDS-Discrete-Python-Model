@@ -26,6 +26,7 @@ from numpy.linalg import matrix_power
 from scipy.linalg import expm
 from sklearn import linear_model
 import pylops
+import itertools
 
 # os and files loading imports
 import os
@@ -198,17 +199,12 @@ def create_dynamics(type_dyn = 'cyl', max_time = 1000, dt = 0.01, change_speed =
 #%% Basic Model Functions
 #%% Main Model Training
 def train_model_include_D(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_subdyns = 3, 
-                          error_reco = np.inf,error_step_max  = 15, error_order = np.nan, data = [], same_c = True,step_f = 30, 
-                          GD_decay = 0.85, weights_orders = [],clean_dyn = [],max_error = 1e-3,grad_vec = [], 
+                          error_reco = np.inf,  data = [], step_f = 30, GD_decay = 0.85, max_error = 1e-3, 
                           max_iter = 3000, F = [], coefficients = [], params= {'update_c_type':'inv','reg_term':0,'smooth_term':0}, 
-                          epsilon_error_change = 10**(-5), D = [], 
-                          x_former =[], latent_dim = None, include_D  = False,step_D = 30, reg1=0,reg_f =0 , 
-                          max_data_reco = 1e-3, acumulated_error = False, sigma_mix_f = 0.1, error_step_add = 120, 
-                          action_along_time = 'median', error_step_max_display = 8, to_print = True, seed = 0, seed_f = 0, 
-                          return_evolution = False,  normalize_eig  = True,
-                          params_ex = {'radius':1, 'num_cyls': 5, 'bias':0,'exp_power':0.2}, start_sparse_c = False,
-                          init_distant_F = False,max_corr = 0.1, decaying_reg = 1, center_dynamics = False, bias_term = False, bias_out = False,
-                          other_params_c={}, include_last_up = False):
+                          epsilon_error_change = 10**(-5), D = [], x_former =[], latent_dim = None, include_D  = False,step_D = 30, reg1=0,reg_f =0 , 
+                          max_data_reco = 1e-3,  sigma_mix_f = 0.1,  action_along_time = 'median', to_print = True, seed = 0, seed_f = 0, 
+                          normalize_eig  = True,  params_ex = {'radius':1, 'num_cyls': 5, 'bias':0,'exp_power':0.2}, 
+                          init_distant_F = False,max_corr = 0.1, decaying_reg = 1, other_params_c={}, include_last_up = False):
     
   """
   This is the main function to train the model! 
@@ -218,108 +214,72 @@ def train_model_include_D(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_su
       dynamics_type = type of the dynamics. Can be 'cyl', 'lorenz', 'multi_cyl', 'torus', 'circ2d', 'spiral'
       num_subdyns   = number of sub-dynamics
       error_reco    = intial error for the reconstruction (do not touch)
-      error_step_max= the step of the weights given to errors from different orders
-      error_order   = error of the order
       data          = if one wants to use a pre define groud-truth dynamics. If not empty - it overwrites max_time, dt, and dynamics_type
-      same_c        = if there is more than one sample for the dynamics (for instance - noisy case), than whether to find a shared coefficients representation to all samples (irrelevant if only one sample) 
       step_f        = initial step size for GD on the sub-dynamics
       GD_decay      = Gradient descent decay rate
-      weights_orders= only use if you have a pre-defined set of weights for the different orders
-      clean_dyn     = use if the dynamics in data is not clean (e.g. noisy scenario). Otherwise - keep empty.
       max_error     = Threshold for the model error. If the model arrives at a lower reconstruction error - the training ends.
-      grad_vec      = the amount by which the curve in 'weights_orders' will change towards higher orders
       max_iter      = # of max. iterations for training the model
       F             = pre-defined sub-dynamics. Keep empty if random.
       coefficients  = pre-defined coefficients. Keep empty if random.
       params        = dictionary that includes info about the regularization and coefficients solver. e.g. {'update_c_type':'inv','reg_term':0,'smooth_term':0}
       epsilon_error_change = check if the sub-dynamics do not change by at least epsilon_error_change, for at least 5 last iterations. Otherwise - add noise to f
       D             = pre-defined D matrix (keep empty if D = I)
-      x_former      = IGNORE; NEED TO ERASE! (NM&&&&)
       latent_dim    =  If D != I, it is the pre-defined latent dynamics.
       include_D     = If True -> D !=I; If False -> D = I
       step_D        = GD step for updating D, only if include_D is true
       reg1          = if include_D is true -> L1 regularization on D
       reg_f         = if include_D is true ->  Frobenius norm regularization on D
       max_data_reco = if include_D is true -> threshold for the error on the reconstruction of the data (continue training if the error (y - Dx)^2 > max_data_reco)
-      acumulated_error       = whether to check a k_th order error or the acumulated error (True = accumulated, False = ordered error)
       sigma_mix_f            = std of noise added to mix f
-      error_step_add         = consider a new order only after passing error_step_add  iterations. Do not touch. 
       action_along_time      = the function to take on the error over time. Can be 'median' or 'mean'
-      error_step_max_display = error order to print when training (int > 0)
       to_print               = to print error value while training? (boolean)
       seed                   = random seed
       seed_f                 = random seed for initializing f
-      return_evolution       = store the evolution of the training (does not change the model, but can be very heavy so recommneded False unless the evolution is needed)
       normalize_eig          = whether to normalize each sub-dynamic by dividing by the highest abs eval
       params_ex              = parameters related to the creation of the ground truth dynamics. e.g. {'radius':1, 'num_cyls': 5, 'bias':0,'exp_power':0.2}
-      start_sparse_c         = If true - start with sparse c and then infer F. If False - start with random F and infer c (not necessarily sparse)
       init_distant_F         = when initializing F -> make sure that the correlation between each pair of {f}_i does not exeed a threshold
       max_corr               = max correlation between each pair of initial sub-dyns (relevant only if init_distant_F is True)
       decaying_reg           = decaying factor for the l1 regularization on the coefficients. If 1 - there is no decay. (should be a scalar in (0,1])
-      center_dynamics        = whether to shift the dynamics to be centered around (0,0). (boolean)                                                                                                                       
-      bias_term              = whether to add a bias term to the model, in the form of x_(t+1) = \sum(f_i c_i)* x_t + bias (boolean)
-      bias_out               = in cases where D!=I, y = Dx + bias_out
+      other_params_c         = additional parameters for the update step of c
+      include_last_up        = add another update step of the coefficients at the end
   """  
-  if acumulated_error  and include_D: raise ValueError('When including D, the error should not be cumulative (you should set the acumulated_error input to False')
-  
-  if error_step_max > 1 and include_D: 
-    print('Error step was reduced to 1 since D is updated')
-    error_step_max = 1
-    error_step_max_display = 1
-  if len(weights_orders) == 0: weights_orders = np.linspace(1,2**error_step_max,error_step_max)[::-1]
-  if len(grad_vec) == 0: grad_vec = np.linspace(0.99,1.01,error_step_max)
-  if not include_D and len(data) > 1: latent_dyn = data
-  if include_D and bias_term and bias_out:
-      print('Disabling internal bias term since D ~=I and bias_out is true')
-      bias_term = False
-  if not include_D and bias_out: # disable bias out if D = I
-      bias_out = False
-      
+  # if D != I
+  if not include_D and len(data) > 1: latent_dyn = data   
 
-  if return_evolution:
-      store_iter_restuls = {'coefficients':[], 'F':[],'L1':[]}
   step_f_original = step_f
   
   # Define data and number of dyns
   if len(data) == 0 :
     data            = create_dynamics(type_dyn = dynamics_type, max_time = max_time, dt = dt, params_ex = params_ex)
     if not include_D: latent_dyn = data
-    one_dyn = True
   else:
-    if isinstance(data, np.ndarray): 
+    if isinstance(data, np.ndarray) and len(data) > 1: 
       if not include_D: latent_dyn = data
-      one_dyn = True
     else:       
-      if len(data) == 1: 
-        one_dyn = True
+      if len(data) == 1:
         data = data[0]
-        if not include_D: latent_dyn          =data #[0]
-      else: 
-        one_dyn = False
+        if not include_D: latent_dyn = data 
+      else:
+          raise ValueError('The parameter "data" is invalid')
+  
+  # Define # of time points 
+  n_times = data.shape[1]
+  
+  # Default value for the latent dimension if D != I     
+  if include_D and np.isnan(latent_dim):
+      latent_dim = int(np.max([data.shape[0] / 5,3]))
+  else:      latent_dim = data.shape[0]; 
 
-  if include_D:
-    if isinstance(data, list):
-      latent_dim = int(np.max([data[0].shape[0] / 5,3])); n_times = data[0].shape[1]
-    else:
-      latent_dim = int(np.max([data.shape[0] / 5,3]));n_times = data.shape[1]
-  else:
-    if isinstance(data, list):
-      latent_dim = data[0].shape[0] ; n_times = data[0].shape[1]
-    else:
-      latent_dim = data.shape[0]; n_times = data.shape[1]
-
-  if include_D: # Namely - model need to study D
-    if one_dyn:
+  if include_D: # If model needs to study D
       if len(D) == 0: D = init_mat(size_mat = (data.shape[0], latent_dim) , dist_type ='sparse', init_params={'k':4})
       elif D.shape[0] != data.shape[0]: raise ValueError('# of rows in D should be = # rows in the data ')
-    else:
-      D = init_mat(size_mat = (data[0].shape[0], latent_dim) , dist_type ='sparse')
-      D = [D]*len(data)
+
   else:
-    latent_dyns = data
+    latent_dyn = data
 
   if len(F) == 0:            
-      F              = [init_mat((latent_dim, latent_dim),normalize=True,r_seed = seed_f+i) for i in range(num_subdyns)]
+      F = [init_mat((latent_dim, latent_dim),normalize=True,r_seed = seed_f+i) for i in range(num_subdyns)]
+      # Check that initial F's are far enough from each other
       if init_distant_F:
            F = check_F_dist_init(F, max_corr = max_corr)
  
@@ -327,77 +287,32 @@ def train_model_include_D(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_su
   Initialize Coeffs
   """
   if len(coefficients) == 0: 
-      if one_dyn or same_c:
-          if start_sparse_c:
-              coefficients   = init_mat((num_subdyns,n_times-1),dist_type = 'regional')
-          else:
-              coefficients   = init_mat((num_subdyns,n_times-1))
-      else:
-          coefficients   = init_mat((num_subdyns,n_times-1,len(latent_dyns)))
-
+                             coefficients   = init_mat((num_subdyns,n_times-1))
   if len(params) == 0:       params         = {'update_c_type':'inv','reg_term':0,'smooth_term':0}
-  counter               = 1
   
-  error_reco_all            = np.inf*np.ones((1,error_step_max))
-  error_reco_all_med        = np.inf*np.ones((1,error_step_max))
   if not include_D:
-    if one_dyn:
-      cur_reco              = create_reco(latent_dyn=latent_dyn, coefficients= coefficients, F=F, accumulation = acumulated_error)
-    else:
-      if same_c:
-        cur_reco              = np.dstack([create_reco(latent_dyn=latent_dyn_i, coefficients= coefficients, F=F, accumulation = acumulated_error) for latent_dyn_i in latent_dyns])
-      else:
-        cur_reco              = np.dstack([create_reco(latent_dyn=latent_dyn_i, coefficients= coefficients[:,:,samp_num], F=F, accumulation = acumulated_error) for samp_num, latent_dyn_i in enumerate(latent_dyns)])
- 
-  error_reco_array      = np.inf*np.ones((1,max(error_step_max_display,error_step_max)))
-  error_reco_array_med  = np.inf*np.ones((1,max(error_step_max_display,error_step_max)))
-  if np.isnan(error_order): 
-    error_order           = error_step_max                                                                                     # if < error_step_max -> do not consider all orders initially
-  counter_change_order  = 1
+      cur_reco              = create_reco(latent_dyn=latent_dyn, coefficients= coefficients, F=F)
+
   if include_D:
     data_reco_error  = np.inf
   else:
     data_reco_error = -np.inf
     
-
-  """
-  Center dynamics
-  """
-  if center_dynamics:
-      if one_dyn:  to_center_vals = -np.mean(data)
-      else:        to_center_vals = [-np.mean(dyn) for dyn in data]
-      if include_D:
-          if one_dyn:  data = data + to_center_vals
-          else:        
-              data = [data_spec + to_center_vals[i] for i, data_spec in enumerate(data)]
-      else:          
-          if one_dyn:  latent_dyn = latent_dyn + to_center_vals
-          else:        
-              latent_dyns = [latent_dyn + to_center_vals[i] for i, latent_dyn in enumerate(latent_dyns)]
-      
-  else:
-    to_center_vals = 0      
-  while ((error_reco_all_med[0,error_step_max-1] > max_error) or (data_reco_error > max_data_reco)) and (counter < max_iter):
+  counter = 1
+ 
+  error_reco_array = []
+  while  data_reco_error > max_data_reco and (counter < max_iter):
       
     ### Store Iteration Results
-    if return_evolution:
-        store_iter_restuls['F'].append(F)
-        store_iter_restuls['coefficients'].append(coefficients)
-        store_iter_restuls['L1'].append(np.sum(np.abs(coefficients),1))
-    if (counter_change_order == error_step_add) and (error_order < error_step_max):
-      error_order +=1
-      counter_change_order = 1
-      step_f = step_f_original*(GD_decay**(error_order**2))      
-    else:
-      counter_change_order += 1
-      
+
+     
     """
     Update x
     """
     
     if include_D:
-      if one_dyn: latent_dyn = update_X(D, data,random_state=seed)
-      else: latent_dyns = [update_X(D, data_i,random_state=seed) for  data_i in data]
+      latent_dyn = update_X(D, data,random_state=seed)
+
       
     """
     Decay reg 
@@ -408,179 +323,65 @@ def train_model_include_D(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_su
     """
     Update coefficients
     """
-    if counter != 1 or not start_sparse_c:
-        if one_dyn:
-          if acumulated_error:
-            coefficients = update_c(F, cur_reco, params, clear_dyn= latent_dyn, direction = 'n2c',random_state=seed,other_params=other_params_c )
-          else:
-            coefficients = update_c(F,latent_dyn, params,random_state=seed,other_params=other_params_c)
-        else:
-          if same_c:
-            if acumulated_error:
-              coefficients = np.mean(np.dstack([update_c(F, cur_reco[:,:,i], params, clear_dyn= latent_dyn, direction = 'n2c',other_params=other_params_c) for i in range(cur_reco.shape[2])]),2)
-            else:
-              coefficients = np.mean(np.dstack([update_c(F,latent_dyns[i], params,other_params=other_params_c) for i in range(cur_reco.shape[2])]),2)
-          else:
-            if acumulated_error:
-              coefficients = np.dstack([update_c(F, cur_reco[:,:,i], params, clear_dyn= latent_dyn, direction = 'n2c',other_params=other_params_c) for i in range(cur_reco.shape[2])])
-            else:
-              coefficients = np.dstack([update_c(F,latent_dyns[i], params,other_params=other_params_c) for i in range(cur_reco.shape[2])])
+    if counter != 1:        coefficients = update_c(F,latent_dyn, params,random_state=seed,other_params=other_params_c)
+
         
-    """
-    Update bias_out
-    """
-    if bias_out:
-        if one_dyn:
-            bias_out_val = update_bias_out(latent_dyn, data ,D,action_along_time= action_along_time)
-        else:
-            bias_out_val = [update_bias_out(latent_dyns[i],data_spec, D,action_along_time= action_along_time) for i,data_spec in enumerate(data)]
-    else:
-        if one_dyn:
-            bias_out_val = np.zeros((data.shape[0], 1))
-        else:
-            bias_out_val = [np.zeros((data_spec.shape[0], 1)) for i,data_spec in enumerate(data)]
     
     """
     Update D
     """
     
     if include_D:
-      if one_dyn: D = update_D(D, step_D, latent_dyn, data, reg1,reg_f, bias_out_val) 
-      else: D = [update_D(D_i, step_D, latent_dyns[i], data[i], reg1,reg_f, bias_out_val) for i, D_i in enumerate(D)]
-    
-    
-    """
-    Update bias_term
-    """
-    if bias_term:
-        if one_dyn:
-            bias_val = update_bias(latent_dyn, F,coefficients,action_along_time= action_along_time)
-        else:
-            if same_c:
-                bias_val = np.dstack([update_bias(latent_dyn, F,coefficients,action_along_time= action_along_time) for i, latent_dyn in enumerate(latent_dyns)]).mean(2)
-            else:
-                bias_val = [update_bias(latent_dyn, F,coefficients[:,:,i],action_along_time= action_along_time) for i,latent_dyn in enumerate(latent_dyns)]
-    else:
-        if one_dyn:
-            bias_val = np.zeros((latent_dyn.shape[0], 1))
-        else:
-            if same_c:                
-                bias_val = np.zeros((latent_dyns[0].shape[0], 1))
-            else:
-                bias_val = [np.zeros((latent_dyn.shape[0], 1)) for i,latent_dyn in enumerate(latent_dyns)]
+      one_dyn: D = update_D(D, step_D, latent_dyn, data, reg1,reg_f) 
 
+    
 
-        
     """
     Update F
-    """
-    
-    if one_dyn:
-      F = update_f_all(latent_dyn,F,coefficients,step_f,normalize=False, acumulated_error = acumulated_error, error_order = error_order-1, action_along_time= action_along_time, weights = weights_orders, normalize_eig = normalize_eig , bias_val = bias_val )
+    """   
 
-    else:
-      if same_c:
-        F_lists = [update_f_all(latent_dyns[i],F,coefficients,step_f,normalize=False, acumulated_error = acumulated_error, error_order = error_order-1, action_along_time= action_along_time, weights = weights_orders, bias_val = bias_val) for i in range(len(latent_dyns))]
-        store_F = np.zeros((latent_dyns[0].shape[0], latent_dyns[0].shape[0],num_subdyns))
-        for F_list in F_lists:
-          store_F = store_F + np.dstack(F_list)
-        store_F = store_F / len(F_lists)
-        F = list(store_F.T)
-      else:
-        F_lists = [update_f_all(latent_dyns[i],F,coefficients[:,:,i],step_f,normalize=False, acumulated_error = acumulated_error, error_order = error_order-1, action_along_time= action_along_time, weights = weights_orders, bias_val = bias_val[i]) for i in range(len(latent_dyns))]
-        store_F = np.zeros((latent_dyns[0].shape[0], latent_dyns[0].shape[0],num_subdyns))
-        for F_list in F_lists:
-          store_F = store_F + np.dstack(F_list)
-        store_F = store_F / len(F_lists)
-        F = list(store_F.T)        
+    F = update_f_all(latent_dyn,F,coefficients,step_f,normalize=False, action_along_time= action_along_time,    normalize_eig = normalize_eig )  
 
-    weights_orders = weights_orders * grad_vec
     step_f *= GD_decay
-    if one_dyn or len(clean_dyn) == 0:
-      mid_reco = latent_dyn
-    else:
-      mid_reco = clean_dyn
-      
-    #mid_reco
-    error_reco_all = np.inf*np.ones((1,max(error_step_max_display,error_step_max))) #[]
-    error_reco_all_med = np.inf*np.ones((1,max(error_step_max_display,error_step_max)))
+    
     if include_D:
-      if one_dyn:       data_reco_error = np.mean((data - D @ latent_dyn)**2)
-      else:  data_reco_error = np.mean((data - np.mean(np.dstack([D @ latent_dyn for latent_dyn in latent_dyns]),2))**2)
-    for n_error_order in range(max(error_step_max_display,error_step_max)):     
-        try:
-            mid_reco = create_reco(mid_reco, coefficients, F, acumulated_error)
-            error_reco = np.mean((latent_dyn -mid_reco)**2)
-            error_reco_all[0,n_error_order] = error_reco
-            error_reco_all_med[0,n_error_order] = np.median((latent_dyn -mid_reco)**2)
-        except:
-            print('mid_reco does not work')
+        data_reco_error = np.mean((data - D @ latent_dyn)**2)
+    mid_reco = create_reco(latent_dyn, coefficients, F)
+    error_reco = np.mean((latent_dyn -mid_reco)**2)
 
-    error_reco_array = np.vstack([error_reco_array,np.array(error_reco_all).reshape((1,-1))])
-    error_reco_array_med = np.vstack([error_reco_array_med,np.array(error_reco_all_med).reshape((1,-1))])
-    if np.mean(np.abs(np.diff(error_reco_array[-5:,:],axis = 0))) < epsilon_error_change:
+    error_reco_array.append(error_reco)
+   
+    if np.mean(np.abs(np.diff(error_reco_array[-5:]))) < epsilon_error_change:
       F = [f_i + sigma_mix_f*np.random.randn(f_i.shape[0],f_i.shape[1]) for f_i in F]
       print('mixed F')
 
     if to_print:
-        print('Error:    ' + '; '.join(['order' + str(i) + '=' + str(error_reco_all[0,i]) for i in range(   min(len(error_reco_all[0]),error_step_max_display))]))
-        print('Error med:' + '; '.join(['order' + str(i) + '=' + str(error_reco_all_med[0,i]) for i in range(min(len(error_reco_all_med[0]),error_step_max_display) )]))
-        if include_D:
-            print('Error recy y:' + '; '.join(['order' + str(j) + '=' + str(data_reco_error) for j in range(1)]))
+        print('Error = %s'%str(error_reco) )
+        if include_D:            print('Error reco y = %s'%str(data_reco_error))
 
     counter += 1
+    if counter == max_iter: print('Arrived to max iter')
 
-  if counter == max_iter: print('Arrived to max iter')
-  #params['to_norm_fx'] = False
+  # Post training adjustments
   if include_last_up:
       coefficients = update_c(F, latent_dyn,params,  {'reg_term': 0, 'update_c_type':'inv','smooth_term' :0, 'num_iters': 10, 'threshkind':'soft'})
   else:
       coefficients = update_c(F, latent_dyn, params,other_params=other_params_c)  
-  if return_evolution:
-    store_iter_restuls['F'].append(F)
-    store_iter_restuls['coefficients'].append(coefficients)
-    store_iter_restuls['L1'].append(np.sum(np.abs(coefficients),1))
+        
   
-  
-  if center_dynamics:
-      if include_D:
-          if one_dyn:  bias_out_val = bias_out_val - to_center_vals
-          else:        
-              bias_out_val = [bias_out_val - to_center_vals[i] for i in range(len(to_center_vals))]
-      else:          
-          if one_dyn:  bias_val = bias_val + to_center_vals
-          else:   
-              if same_c:
-                  bias_val = [bias_val + to_center_vals[i] for i in range(len(to_center_vals))]
-              else:
-                  bias_val = [bias_val[i] + to_center_vals[i] for i in range(len(to_center_vals))]
-          
-  additional_return = {'bias_val': bias_val, 'to_center_vals': to_center_vals,'bias_out_val':bias_out_val}          
-  if not return_evolution:
-      if not include_D: D = [];
-      if one_dyn:      return coefficients, F, latent_dyn, error_reco_array, error_reco_array_med,D,additional_return
-      else:  return coefficients, F, latent_dyns, error_reco_array, error_reco_array_med,D,additional_return
-  else:
-      if not include_D: D = [];
-      if one_dyn:      return coefficients, F, latent_dyn, error_reco_array, error_reco_array_med,D,store_iter_restuls, additional_return
-      else:  return coefficients, F, latent_dyns, error_reco_array, error_reco_array_med,D,store_iter_restuls,additional_return
+  if not include_D: D = [];
+  if one_dyn:      return coefficients, F, latent_dyn, error_reco_array
       
 
-
-
-
-
-
-
-def update_D(former_D, step_D , x, y, reg1 = 0, reg_f= 0, bias_out_val = []) :
+def update_D(former_D, step_D , x, y, reg1 = 0, reg_f= 0) :
   """
   Update the matrix D by applying GD. Relevant just in case where D != I
   """
-  if len(bias_out_val) == 0: bias_out_val = np.zeros((former_D.shape[0], 1))
+  
   if reg1 == 0 and reg_f ==0:
     D = y @ linalg.pinv(x)
   else:
-    basic_error = -2*(y - former_D @ x - bias_out_val) @ x.T
+    basic_error = -2*(y - former_D @ x ) @ x.T
     if reg1 != 0:      reg1_error = np.sum(np.sign(former_D))
     else: reg1_error = 0      
     if reg_f != 0:      reg_f_error = 2*former_D
@@ -596,7 +397,7 @@ def update_X(D, data, reg1 = 0, former_x = [], random_state = 0, other_params ={
     x = linalg.pinv(D) @ data
   else:
     clf = linear_model.Lasso(alpha=reg1,random_state=random_state, **other_params)
-    clf.fit(D,y)
+    clf.fit(D,data)
     x = np.array(clf.coef_)
   return x
 
@@ -609,13 +410,18 @@ def check_F_dist_init(F, max_corr = 0.1):
     counter= 100
     while (corr_bool == False).any():
         counter +=1
-        for comb_num,comb in enumerate(combinations):
+        for comb_num,comb in enumerate(combs):
             if spec_corr(F[comb[0]],F[comb[1]])  > max_corr:
                 fi_new = init_mat(np.shape(F[0]),dist_type = 'norm',r_seed = counter)
                 F[comb[0]] = fi_new
     return F
         
-    
+def spec_corr(v1,v2):
+  """
+  absolute value of correlation
+  """
+  corr = np.corrcoef(v1[:],v2[:])
+  return np.abs(corr[0,1])    
     
 
 def init_mat(size_mat, r_seed = 0, dist_type = 'norm', init_params = {'loc':0,'scale':1}, normalize = False):
@@ -851,7 +657,7 @@ def update_c(F, latent_dyn,
   return coeffs_final.T
 
 
-def create_next(latent_dyn, coefficients, F,time_point, order = 1):
+def create_next(latent_dyn, coefficients, F,time_point):
   """
   This function evaluate the dynamics at t+1 given the value of the dynamics at time t, the sub-dynamics, and other model parameters
   Inputs:
@@ -862,24 +668,19 @@ def create_next(latent_dyn, coefficients, F,time_point, order = 1):
       order         = how many time points in the future we want to estimate
   Outputs:
       k X 1 np.array describing the dynamics at time_point+1
-  order 1 = only x_(t+1) is predicted using x_t. if order = k, x_(t+k) is predicted using x_t
+
   """
   if isinstance(F[0],list):
     F = [np.array(f_i) for f_i in F]
 
   if latent_dyn.shape[1] > 1:
-
     cur_A  = np.dstack([coefficients[i,time_point]*f_i @ latent_dyn[:, time_point] for i,f_i in enumerate(F)]).sum(2).T   
   else:
-
     cur_A  = np.dstack([coefficients[i,time_point]*f_i @ latent_dyn for i,f_i in enumerate(F)]).sum(2).T 
-  if order > 1:
-      cifi =  np.dstack([coefficients[i,time_point]*f_i for i,f_i in enumerate(F)]).sum(2).T 
-      cifi_power = matrix_power(cifi,order-1)
-      cur_A = cifi_power @ cur_A
   return cur_A
 
-def create_ci_fi_xt(latent_dyn,F,coefficients, cumulative = False,error_order = 1, weights_power = 1.2, weights = [], mute_infs = 10**50, max_inf = 10**60, bias_val = []):
+def create_ci_fi_xt(latent_dyn,F,coefficients, cumulative = False, mute_infs = 10**50, 
+                    max_inf = 10**60):
     
   """
   An intermediate step for the reconstruction -
@@ -888,38 +689,10 @@ def create_ci_fi_xt(latent_dyn,F,coefficients, cumulative = False,error_order = 
   output: 
       3d array of the gradient step (unweighted): [k X k X time]
   """
-  if len(bias_val) == 0: bias_val = np.zeros((latent_dyn.shape[0], 1))
+
   if max_inf <= mute_infs:
     raise ValueError('max_inf should be higher than mute-infs')
-    
-  if  error_order > 1:
-    curse_dynamics = latent_dyn
-    list_dyns = [curse_dynamics]; order_list = [1]
-
-    for i in range(error_order):
-      curse_dynamics =create_reco(curse_dynamics, coefficients, F)  # changeNM -  add a loop that create cuse according to order
-      curse_dynamics[curse_dynamics > max_inf] = max_inf
-      curse_dynamics[curse_dynamics < -max_inf] = -max_inf
-      list_dyns.append(curse_dynamics); order_list.append(i+2)
-
-    if len(weights) == 0:
-      weights = np.array(order_list)[::-1]**weights_power/np.sum(np.array(order_list)**weights_power)
-    if mute_infs > 0:
-      to_mute = np.array([np.median((list_dyn-latent_dyn)**2) > mute_infs for list_dyn in list_dyns]      )
-    else:
-      to_mute = np.array([False] * len(list_dyns))
-    if (to_mute == False).any():
-    
-      weights[to_mute] = 0
-
-    else:
-      mute_vals = np.array([np.median((list_dyn-latent_dyn)**2)  for list_dyn in list_dyns]      )
-      weights[mute_vals > np.min(mute_vals)] = 0
-  
-    weights = weights / np.sum(weights)
-    curse_dynamics = np.average(np.dstack(list_dyns), axis = 2, weights = np.array(order_list)[::-1]/np.sum(np.array(order_list)**2))
-  else:
-    curse_dynamics = latent_dyn
+  curse_dynamics = latent_dyn
 
   all_grads = []
   for time_point in np.arange(latent_dyn.shape[1]-1):
@@ -936,8 +709,7 @@ def create_ci_fi_xt(latent_dyn,F,coefficients, cumulative = False,error_order = 
     """
     The actual step
     """
-    if np.sum(bias_val) !=0:
-        cur_A = cur_A + bias_val
+
     if cumulative:
       gradient_val = (next_A - cur_A) @ previous_A.T
     else:
@@ -946,32 +718,22 @@ def create_ci_fi_xt(latent_dyn,F,coefficients, cumulative = False,error_order = 
   return np.dstack(all_grads)
 
 
-def update_f_all(latent_dyn,F,coefficients,step_f, normalize = False, acumulated_error = False,error_order = 1,action_along_time = 'mean', weights_power = 1.2, weights = [], normalize_eig = True,  bias_val = []):
+def update_f_all(latent_dyn,F,coefficients,step_f, normalize = False, acumulated_error = False,
+                 action_along_time = 'mean', weights_power = 1.2, normalize_eig = True):
     
   """
   Update all the sub-dynamics {f_i} using GD
   """
-  if len(bias_val) == 0:
-      bias_val = np.zeros((latent_dyn.shape[0], 1))
       
   if action_along_time == 'mean':
-    if acumulated_error:
-      all_grads = create_ci_fi_xt(latent_dyn,F,coefficients, cumulative = acumulated_error, error_order = error_order, weights_power=weights_power,weights =weights, bias_val = bias_val)
-      new_f_s = [norm_mat(f_i-2*step_f*norm_mat(np.mean(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
     
-    else:
-      all_grads = create_ci_fi_xt(latent_dyn,F,coefficients,error_order = error_order, weights_power=weights_power,weights =weights, bias_val = bias_val)
-      new_f_s = [norm_mat(f_i-2*step_f*norm_mat(np.mean(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
+    all_grads = create_ci_fi_xt(latent_dyn,F,coefficients)
+    new_f_s = [norm_mat(f_i-2*step_f*norm_mat(np.mean(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
   elif action_along_time == 'median':
-    if acumulated_error:
-      all_grads = create_ci_fi_xt(latent_dyn,F,coefficients, cumulative = acumulated_error, error_order = error_order, weights_power=weights_power,weights =weights, bias_val = bias_val)
-      new_f_s = [norm_mat(f_i-2*step_f*norm_mat(np.median(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
+    all_grads = create_ci_fi_xt(latent_dyn,F,coefficients)
+            
+    new_f_s = [norm_mat(f_i-2*step_f*norm_mat(np.median(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
     
-    else:
-      all_grads = create_ci_fi_xt(latent_dyn,F,coefficients,error_order = error_order, weights_power=weights_power,weights =weights, bias_val = bias_val)
-      
-      
-      new_f_s = [norm_mat(f_i-2*step_f*norm_mat(np.median(all_grads[:,:,:]*np.reshape(coefficients[i,:], [1,1,-1]), 2),to_norm = normalize),to_norm = normalize_eig ) for i,f_i in enumerate(F)] 
   else:
     raise NameError('Unknown action along time. Should be mean or median')
   for f_num in range(len(new_f_s)):
@@ -1415,73 +1177,19 @@ def movmfunc(func, mat, window = 3, direction = 0):
     movefunc_res = np.vstack([func(mat_wrap[:,i-addition:i+addition],axis = direction) for i in range(addition, np.shape(mat_wrap)[1]-addition)]).T
   return movefunc_res
 
-def create_reco(latent_dyn,coefficients, F, accumulation = False, step_n = 1,type_find = 'median',min_far =10, smooth_coeffs = False, smoothing_params = {'wind':5},enable_history = True, bias_type = 'disable', bias_val = []):
+def create_reco(latent_dyn,coefficients, F, type_find = 'median',min_far =10, smooth_coeffs = False,
+                smoothing_params = {'wind':5},enable_history = True):
   """
   This function creates the reconstruction 
-  step_n: if accumulation -> how many previous samples to consider
-          if accumulation == False -> the reconstruction order
-  bias_type: can be:
-      disable - no internal bias
-      shift  - shift of the reconstructed dynamics by a fixed value
-      each   - add the bias inside the reconstruction
   """
   if smooth_coeffs:
     coefficients = movmfunc(np.nanmedian, coefficients, window = smoothing_params['wind'], direction = 1)
-  if accumulation:
-    calcul_history = False
-    cur_reco = latent_dyn[:,0].reshape((-1,1))
-    for time_point in range(latent_dyn.shape[1]-1):
-      next_dyn1 = create_next(cur_reco, coefficients, F,time_point)
-      if step_n == 1:
-        next_dyn = next_dyn1
-      else:
-        if (next_dyn1 < min_far).all():
-          next_dyns = [next_dyn1]
-        else:
-          next_dyns = []
+  
 
-        for order in range(2,step_n+1):
-          if time_point-order+1 >= 0:#cur_reco.shape[1]
-            cur_next_dyn = create_next(latent_dyn, coefficients, F,time_point-order+1, order = order)
-            if (cur_next_dyn < min_far).all():
-              next_dyns.append(cur_next_dyn)
-        if len(next_dyns) > 0:          
-          if type_find == 'mean':
-            next_dyn = np.dstack(next_dyns).mean(2)
-          elif type_find == 'median':
-            next_dyn = np.median(np.dstack(next_dyns),2)
-          else:
-            raise NameError('Unknown type find')
-        else:
-          calcul_history = True
-      if enable_history and (((step_n == 1) and (not (next_dyn1 < min_far).all())) or (calcul_history)):
-        addi = 1    
-        while not (next_dyn < min_far).all():          
-          if time_point-step_n+1-addi <=0:
-            next_dyn = next_dyn1
-            break
-          next_dyn = create_next(latent_dyn, coefficients, F,time_point-step_n+1-addi, order = step_n+addi)# create_reco(latent_dyn,coefficients, F, accumulation, step_n = step_n+1,type_find = 'median',min_far =10, smooth_coeffs = False, smoothing_params = {'wind':5},enable_history = True)[:,-1]
-          addi += 1
-      else:
-        next_dyn = next_dyn1
-      if bias_type == 'each'  and len(bias_val) > 0:
-          cur_reco = np.hstack([cur_reco, next_dyn.reshape(-1,1) + bias_val.reshape(-1,1)])
-      else:    
-          cur_reco = np.hstack([cur_reco, next_dyn.reshape(-1,1)])
-  else:
-    if bias_type == 'each'  and len(bias_val) > 0:
-        cur_reco = np.hstack([create_next(latent_dyn, coefficients, F,time_point)+ bias_val.reshape(-1,1) for time_point in range(latent_dyn.shape[1]-1)])
-        cur_reco = np.hstack([latent_dyn[:,0].reshape((-1,1)),cur_reco])
-    else:
-        cur_reco = np.hstack([create_next(latent_dyn, coefficients, F,time_point) for time_point in range(latent_dyn.shape[1]-1)])
-        cur_reco = np.hstack([latent_dyn[:,0].reshape((-1,1)),cur_reco])
+  cur_reco = np.hstack([create_next(latent_dyn, coefficients, F,time_point) for time_point in range(latent_dyn.shape[1]-1)])
+  cur_reco = np.hstack([latent_dyn[:,0].reshape((-1,1)),cur_reco])
     
-    if step_n <= 1:
-        pass
-    else:
-      cur_reco = create_reco(cur_reco,coefficients, F, accumulation = False, step_n = step_n-1,type_find = type_find, smooth_coeffs = smooth_coeffs, smoothing_params = smoothing_params)
-  if bias_type == 'shift' and len(bias_val) > 0:
-      cur_reco = cur_reco + bias_val.reshape(-1,1)
+
   return cur_reco
 
 
@@ -1599,39 +1307,7 @@ def create_colors(len_colors, perm = [0,1,2]):
     colors = np.vstack([np.linspace(0,1,len_colors),(1-np.linspace(0,1,len_colors))**2,1-np.linspace(0,1,len_colors)])
     colors = colors[perm, :]
     return colors
-        
-def plot_dict_array(dict_to_plot, cmap = 'PiYG', axs = [], key_to_plot = 'coefficients',type_plot = 'plot',min_time = 50,sharey= 'row',rows_plot = -10,logscale = False, zero_ref = 0,xlabel = 'Time',ylabel = 'coeffs'):
-    """
-    Plot dynamics with different regularization values
-    type_plot: can be plot or heatmap
-    """
-    
-    if isinstance(axs,list):
-        if len(axs) == 0:
-            fig, axs = plt.subplots(len(dict_to_plot.keys()), len(dict_to_plot[list(dict_to_plot.keys())[0]]), figsize = (15,len(dict_to_plot.keys())*4), sharey = sharey)  #, sharex  = True, sharey = True
-            axs = axs.reshape(len(dict_to_plot.keys()), len(dict_to_plot[list(dict_to_plot.keys())[0]]))
-    reg_ordered_to_plot = list(dict_to_plot.keys())
-    num_dyns_values = dict_to_plot[reg_ordered_to_plot[0]]
-    if type_plot == 'plot':
-       
-        if rows_plot <= -5:         [[axs[reg_val_num,num_dyns_count].plot(dict_to_plot[reg_val][num_dyns_val][key_to_plot][:,min_time:].T) for num_dyns_count, num_dyns_val in enumerate(num_dyns_values.keys())] for reg_val_num, reg_val in enumerate(reg_ordered_to_plot)]
-        else:         
-            [[axs[reg_val_num,num_dyns_count].plot(dict_to_plot[reg_val][num_dyns_val][key_to_plot][rows_plot, min_time:]) for num_dyns_count, num_dyns_val in enumerate(num_dyns_values.keys())] for reg_val_num, reg_val in enumerate(reg_ordered_to_plot)]
-        if not np.isnan(zero_ref):
-            [ax.axhline(zero_ref,color = 'r',ls = '--',alpha = 0.5) for ax in axs.flatten()]
 
-            
-    elif    type_plot == 'heat':
-        if rows_plot <= -5: [[sns.heatmap(dict_to_plot[reg_val][num_dyns_val][key_to_plot][:,min_time:].T,ax = axs[reg_val_num,num_dyns_count],vmin = 0,vmax = 0.1,cmap = cmap) for num_dyns_count, num_dyns_val in enumerate(num_dyns_values.keys())] for reg_val_num, reg_val in enumerate(reg_ordered_to_plot)]
-        else:  [[sns.heatmap(dict_to_plot[reg_val][num_dyns_val][key_to_plot][rows_plot,min_time:].reshape((1,-1)),ax = axs[reg_val_num,num_dyns_count],vmin =0,vmax = 0.1, cmap = cmap) for num_dyns_count, num_dyns_val in enumerate(num_dyns_values.keys())] for reg_val_num, reg_val in enumerate(reg_ordered_to_plot)]
-       
-    else:
-        raise NameError('Unknown type plot!')
-    [[add_labels(ax = axs[reg_val_num,num_dyns_count], title = 'reg =%g, for %g dynamics'%(reg_val, num_dyns_val), xlabel = xlabel,ylabel = ylabel,zlabel = None) for num_dyns_count, num_dyns_val in enumerate(num_dyns_values.keys())] for reg_val_num, reg_val in enumerate(reg_ordered_to_plot)]
-    if logscale:
-        [ax_spec.set_yscale('log') for ax_spec in axs.flatten()]
-    fig.subplots_adjust(hspace = 0.7,wspace = 0.5)    
-    
 
 
 #%% Plot tricolor curve for Lorenz
@@ -1691,7 +1367,7 @@ def find_perpendicular(d1, d2, perp_length = 1, prev_v = [], next_v = [], ref_po
     elif d2[1] == d1[1]:        d2_perp = np.array([d1_perp[0], d1_perp[1]+perp_length])
     else:
         m = (d2[1]-d1[1])/(d2[0]-d1[0]) 
-        m_per = -1/m                                       # Slope of perp curve        
+        m_per = -1/m                                                   # Slope of perp curve        
         theta1 = np.arctan(m_per)
         theta2 = theta1 + np.pi
         
@@ -1745,8 +1421,7 @@ def find_perpendicular(d1, d2, perp_length = 1, prev_v = [], next_v = [], ref_po
             else:
                 dist1 = np.sum((prev_mid - d2_perp1)**2)
                 dist2 = np.sum((prev_mid - d2_perp2)**2)
-                max_opt = np.argmin([dist1,dist2])  
-                
+                max_opt = np.argmin([dist1,dist2])                  
         else:
         
             if len(ref_point) > 0 and layer_num >0:                               # here ref point is a point of a different dynamics layer from which we want to take distance
@@ -1823,6 +1498,13 @@ def find_lows_high(coeff_row, latent_dyn,   choose_meth ='intersection',factor_p
         return x_lows_y_lows, x_highs_y_highs, unchosen_highs
     return x_lows_y_lows, x_highs_y_highs        
 
+def spec_corr(v1,v2):
+  """
+  absolute value of correlation
+  """
+  corr = np.corrcoef(v1[:],v2[:])
+  return np.abs(corr[0,1])
+
 
 def plot_multi_colors(store_dict,min_time_plot = 0,max_time_plot = -100,  colors = ['green','red','blue'], ax = [],
                       fig = [], alpha = 0.99, smooth_window = 3, factor_power = 0.9, coefficients_n = [], to_scatter = False, 
@@ -1839,7 +1521,6 @@ def plot_multi_colors(store_dict,min_time_plot = 0,max_time_plot = -100,  colors
         if key_counter == 0:
             x_lows_y_lows = store_dict[key][0]
             x_highs_y_highs = store_dict[key][1]
-            #choose_meth_initial = 
             low_ref =[]
             high_ref = []
         else:
