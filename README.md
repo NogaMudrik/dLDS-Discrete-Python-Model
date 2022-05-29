@@ -66,18 +66,18 @@ _main function to train the model._
                 smoothing_params = {'wind':5})_
 #### Parameters:                
                   This function creates the reconstruction 
-  Inputs:
-      latent_dyn   = the ground truth latent dynamics
-      coefficients = the operators coefficients (c(t)_i)
-      F            = a list of transport operators (a list with M transport operators, 
-                                                    each is a square matrix, kXk, where k is the latent dynamics
-                                                    dimension )
-      type_find    = 'median'
-      min_far      = 10
-      smooth_coeffs= False
-      smoothing_params = {'wind':5}
-      
-  Outputs:
-      cur_reco    = dLDS reconstruction of the latent dynamics
-                
+                  Inputs:
+                      latent_dyn   = the ground truth latent dynamics
+                      coefficients = the operators coefficients ({$c(t)_i})
+                      F            = a list of transport operators (a list with M transport operators, 
+                                                                    each is a square matrix, kXk, where k is the latent dynamics
+                                                                    dimension )
+                      type_find    = 'median'
+                      min_far      = 10
+                      smooth_coeffs= False
+                      smoothing_params = {'wind':5}
+
+                  Outputs:
+                      cur_reco    = dLDS reconstruction of the latent dynamics
+
                 
