@@ -5,9 +5,13 @@ Decomposed Linear Dynamical Systems (dLDS) for \newline  learning the latent com
 ## A) Main Model Figues
 ## B) Package and functions description
 
+=================================================================
+# A) Package and functions description
+
+=================================================================
 # B) Package and functions description
 
-## Functions:
+## Main Useful Functions:
 
 ### 1. create_dynamics:
 _create sample dynamics_
@@ -82,11 +86,11 @@ _main function to train the model._
 
 
 ### 3. create_reco: 
-    _ create the dynamics reconstruction using the operators and coefficients obtained by dLDS (F, c)._ 
-     
-     
-     **create_reco**_(latent_dyn,coefficients, F, type_find = 'median',min_far =10, smooth_coeffs = False,
-                smoothing_params = {'wind':5})_
+_create the dynamics reconstruction using the operators and coefficients obtained by dLDS (F, c)._
+
+
+**create_reco**_(latent_dyn,coefficients, F, type_find = 'median',min_far =10, smooth_coeffs = False,
+          smoothing_params = {'wind':5})_
 #### Detailed Description:                
                   This function creates the reconstruction 
                   Inputs:
@@ -106,29 +110,29 @@ _main function to train the model._
 
 
 ### 4. visualize_dyn:
-    _visualization of a dynamics, with various coloring options_ 
+_visualization of a dynamics, with various coloring options_ 
      
-     
-     **visualize_dyn**_(dyn,ax = [], params_plot = {},turn_off_back = False, marker_size = 10, include_line = False, 
-                  color_sig = [],cmap = 'cool', return_fig = False, color_by_dominant = False, coefficients =[],
-                  figsize = (5,5),colorbar = False, colors = [],vmin = None,vmax = None, color_mix = False, alpha = 0.4,
-                  colors_dyns = np.array(['r','g','b','yellow']), add_text = 't ', text_points = [],fontsize_times = 18, 
-                  marker = "o",delta_text = 0.5, color_for_0 =None, legend = [],fig = [],return_mappable = False)_
+
+**visualize_dyn**_(dyn,ax = [], params_plot = {},turn_off_back = False, marker_size = 10, include_line = False, 
+            color_sig = [],cmap = 'cool', return_fig = False, color_by_dominant = False, coefficients =[],
+            figsize = (5,5),colorbar = False, colors = [],vmin = None,vmax = None, color_mix = False, alpha = 0.4,
+            colors_dyns = np.array(['r','g','b','yellow']), add_text = 't ', text_points = [],fontsize_times = 18, 
+            marker = "o",delta_text = 0.5, color_for_0 =None, legend = [],fig = [],return_mappable = False)_
 #### Detailed Description:                
-  Inputs:
-       dyn          = dynamics to plot. Should be a np.array with size k X T
-       ax           = the subplot to plot in. (optional). If empty list -> the function will create a subplot
-       params_plot  = additional parameters for the plotting (optional). Can include plotting-related keys like xlabel, ylabel, title, etc.
-       turn_off_back= disable backgroud of the plot? (optional). Boolean
-       marker_size  = marker size of the plot (optional). Integer
-       include_line = add a curve to the plot (in addition to the scatter plot). Boolean
-       color_sig    = the color signal. 
-                          If empty and color_by_dominant is true - color by the dominant dynamics. 
-                          If empty and not color_by_dominant - color by time.
-       cmap         = color map
-       colors       = if not empty -> pre-defined colors for the different sub-dynamics. 
-                      If empty -> colors are according to the cmap.
-       color_mix    = relevant only if  color_by_dominant is True. In this case the colors need to be in the form of [r,g,b]
-   Output:   
-       h (only if return_fig) -> returns the figure   
+              Inputs:
+                   dyn          = dynamics to plot. Should be a np.array with size k X T
+                   ax           = the subplot to plot in. (optional). If empty list -> the function will create a subplot
+                   params_plot  = additional parameters for the plotting (optional). Can include plotting-related keys like xlabel, ylabel, title, etc.
+                   turn_off_back= disable backgroud of the plot? (optional). Boolean
+                   marker_size  = marker size of the plot (optional). Integer
+                   include_line = add a curve to the plot (in addition to the scatter plot). Boolean
+                   color_sig    = the color signal. 
+                                      If empty and color_by_dominant is true - color by the dominant dynamics. 
+                                      If empty and not color_by_dominant - color by time.
+                   cmap         = color map
+                   colors       = if not empty -> pre-defined colors for the different sub-dynamics. 
+                                  If empty -> colors are according to the cmap.
+                   color_mix    = relevant only if  color_by_dominant is True. In this case the colors need to be in the form of [r,g,b]
+               Output:   
+                   h (only if return_fig) -> returns the figure   
                 
