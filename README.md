@@ -8,7 +8,35 @@ Decomposed Linear Dynamical Systems (dLDS) for \newline  learning the latent com
 # B) Package and functions description
 
 ## Functions:
-##### 1. train_model_include_D:
+
+##### 1. create_dynamics
+<!-- (type_dyn = 'cyl', max_time = 1000, dt = 0.01, change_speed = False, t_speed = np.exp, axis_speed = [],params_ex = {'radius':1, 'num_cyls': 5, 'bias':0,'exp_power':0.2}) -->
+
+
+**train_model_include_D**_(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_subdyns = 3, 
+                          error_reco = np.inf,  data = [], step_f = 30, GD_decay = 0.85, max_error = 1e-3, 
+                          max_iter = 3000, F = [], coefficients = [], params= {'update_c_type':'inv','reg_term':0,'smooth_term':0}, 
+                          epsilon_error_change = 10**(-5), D = [], x_former =[], latent_dim = None, include_D  = False,step_D = 30, reg1=0,reg_f =0 , 
+                          max_data_reco = 1e-3,  sigma_mix_f = 0.1,  action_along_time = 'median', to_print = True, seed = 0, seed_f = 0, 
+                          normalize_eig  = True,  params_ex = {'radius':1, 'num_cyls': 5, 'bias':0,'exp_power':0.2}, 
+                          init_distant_F = False,max_corr = 0.1, decaying_reg = 1, other_params_c={}, include_last_up = False)_
+
+#### Detailed Description:
+  Create ground truth dynamics. 
+  Inputs:
+      type_dyn          = Can be 'cyl', 'lorenz','FHN', 'multi_cyl', 'torus', 'circ2d', 'spiral'
+      max_time          = integer. Number of time points for the dynamics. Relevant only if data is empty;
+      dt                = time interval for the dynamics.
+      params_ex         = dictionary of parameters for the dynamics.  {'radius':1, 'num_cyls': 5, 'bias':0,'exp_power':0.2}):
+    
+      
+  Outputs:
+      dynamics: k X T matrix of the dynamics 
+
+
+
+
+##### 2. train_model_include_D:
 _main function to train the model._
 
 **train_model_include_D**_(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_subdyns = 3, 
@@ -19,7 +47,7 @@ _main function to train the model._
                           normalize_eig  = True,  params_ex = {'radius':1, 'num_cyls': 5, 'bias':0,'exp_power':0.2}, 
                           init_distant_F = False,max_corr = 0.1, decaying_reg = 1, other_params_c={}, include_last_up = False)_
 
-#### Parameters:
+#### Detailed Description:
       max_time         = Number of time points for the dynamics. Relevant only if data is empty;
       dt               =  time interval for the dynamics
       dynamics_type    = type of the dynamics. Can be 'cyl', 'lorenz','FHN', 'multi_cyl', 'torus', 'circ2d', 'spiral'
@@ -59,13 +87,13 @@ _main function to train the model._
 
 
 
-     #### 2. create_reco: 
+     #### 3. create_reco: 
     _ create the dynamics reconstruction using the operators and coefficients obtained by dLDS (F, c)._ 
      
      
      **create_reco**_(latent_dyn,coefficients, F, type_find = 'median',min_far =10, smooth_coeffs = False,
                 smoothing_params = {'wind':5})_
-#### Parameters:                
+#### Detailed Description:                
                   This function creates the reconstruction 
                   Inputs:
                       latent_dyn   = the ground truth latent dynamics
@@ -80,5 +108,33 @@ _main function to train the model._
 
                   Outputs:
                       cur_reco    = dLDS reconstruction of the latent dynamics
+                      
 
+
+   #### 4. visualize_dyn:
+    _visualization of a dynamics, with various coloring options_ 
+     
+     
+     **visualize_dyn**_(dyn,ax = [], params_plot = {},turn_off_back = False, marker_size = 10, include_line = False, 
+                  color_sig = [],cmap = 'cool', return_fig = False, color_by_dominant = False, coefficients =[],
+                  figsize = (5,5),colorbar = False, colors = [],vmin = None,vmax = None, color_mix = False, alpha = 0.4,
+                  colors_dyns = np.array(['r','g','b','yellow']), add_text = 't ', text_points = [],fontsize_times = 18, 
+                  marker = "o",delta_text = 0.5, color_for_0 =None, legend = [],fig = [],return_mappable = False)_
+#### Detailed Description:                
+  Inputs:
+       dyn          = dynamics to plot. Should be a np.array with size k X T
+       ax           = the subplot to plot in. (optional). If empty list -> the function will create a subplot
+       params_plot  = additional parameters for the plotting (optional). Can include plotting-related keys like xlabel, ylabel, title, etc.
+       turn_off_back= disable backgroud of the plot? (optional). Boolean
+       marker_size  = marker size of the plot (optional). Integer
+       include_line = add a curve to the plot (in addition to the scatter plot). Boolean
+       color_sig    = the color signal. 
+                          If empty and color_by_dominant is true - color by the dominant dynamics. 
+                          If empty and not color_by_dominant - color by time.
+       cmap         = color map
+       colors       = if not empty -> pre-defined colors for the different sub-dynamics. 
+                      If empty -> colors are according to the cmap.
+       color_mix    = relevant only if  color_by_dominant is True. In this case the colors need to be in the form of [r,g,b]
+   Output:   
+       h (only if return_fig) -> returns the figure   
                 
