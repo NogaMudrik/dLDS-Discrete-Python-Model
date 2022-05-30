@@ -1182,9 +1182,23 @@ def movmfunc(func, mat, window = 3, direction = 0):
   return movefunc_res
 
 def create_reco(latent_dyn,coefficients, F, type_find = 'median',min_far =10, smooth_coeffs = False,
-                smoothing_params = {'wind':5},enable_history = True):
+                smoothing_params = {'wind':5}):
   """
   This function creates the reconstruction 
+  Inputs:
+      latent_dyn   = the ground truth latent dynamics
+      coefficients = the operators coefficients (c(t)_i)
+      F            = a list of transport operators (a list with M transport operators, 
+                                                    each is a square matrix, kXk, where k is the latent dynamics
+                                                    dimension )
+      type_find    = 'median'
+      min_far      = 10
+      smooth_coeffs= False
+      smoothing_params = {'wind':5}
+      
+  Outputs:
+      cur_reco    = dLDS reconstruction of the latent dynamics
+      
   """
   if smooth_coeffs:
     coefficients = movmfunc(np.nanmedian, coefficients, window = smoothing_params['wind'], direction = 1)
