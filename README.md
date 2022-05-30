@@ -9,34 +9,29 @@ Decomposed Linear Dynamical Systems (dLDS) for \newline  learning the latent com
 
 ## Functions:
 
-##### 1. create_dynamics
-<!-- (type_dyn = 'cyl', max_time = 1000, dt = 0.01, change_speed = False, t_speed = np.exp, axis_speed = [],params_ex = {'radius':1, 'num_cyls': 5, 'bias':0,'exp_power':0.2}) -->
+### 1. create_dynamics:
+_create sample dynamics_
 
 
-**train_model_include_D**_(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_subdyns = 3, 
-                          error_reco = np.inf,  data = [], step_f = 30, GD_decay = 0.85, max_error = 1e-3, 
-                          max_iter = 3000, F = [], coefficients = [], params= {'update_c_type':'inv','reg_term':0,'smooth_term':0}, 
-                          epsilon_error_change = 10**(-5), D = [], x_former =[], latent_dim = None, include_D  = False,step_D = 30, reg1=0,reg_f =0 , 
-                          max_data_reco = 1e-3,  sigma_mix_f = 0.1,  action_along_time = 'median', to_print = True, seed = 0, seed_f = 0, 
-                          normalize_eig  = True,  params_ex = {'radius':1, 'num_cyls': 5, 'bias':0,'exp_power':0.2}, 
-                          init_distant_F = False,max_corr = 0.1, decaying_reg = 1, other_params_c={}, include_last_up = False)_
+
+**create_dynamics**_(type_dyn = 'cyl', max_time = 1000, dt = 0.01, params_ex = {'radius':1, 'num_cyls': 5, 'bias':0,'exp_power':0.2})_
 
 #### Detailed Description:
-  Create ground truth dynamics. 
-  Inputs:
-      type_dyn          = Can be 'cyl', 'lorenz','FHN', 'multi_cyl', 'torus', 'circ2d', 'spiral'
-      max_time          = integer. Number of time points for the dynamics. Relevant only if data is empty;
-      dt                = time interval for the dynamics.
-      params_ex         = dictionary of parameters for the dynamics.  {'radius':1, 'num_cyls': 5, 'bias':0,'exp_power':0.2}):
+      Create ground truth dynamics. 
+      Inputs:
+          type_dyn          = Can be 'cyl', 'lorenz','FHN', 'multi_cyl', 'torus', 'circ2d', 'spiral'
+          max_time          = integer. Number of time points for the dynamics. Relevant only if data is empty;
+          dt                = time interval for the dynamics.
+          params_ex         = dictionary of parameters for the dynamics.  {'radius':1, 'num_cyls': 5, 'bias':0,'exp_power':0.2}):
     
       
-  Outputs:
-      dynamics: k X T matrix of the dynamics 
+      Outputs:
+          dynamics: k X T matrix of the dynamics 
 
 
 
 
-##### 2. train_model_include_D:
+### 2. train_model_include_D:
 _main function to train the model._
 
 **train_model_include_D**_(max_time = 500, dt = 0.1, dynamics_type = 'cyl',num_subdyns = 3, 
@@ -86,8 +81,7 @@ _main function to train the model._
 
 
 
-
-     #### 3. create_reco: 
+### 3. create_reco: 
     _ create the dynamics reconstruction using the operators and coefficients obtained by dLDS (F, c)._ 
      
      
@@ -111,7 +105,7 @@ _main function to train the model._
                       
 
 
-   #### 4. visualize_dyn:
+### 4. visualize_dyn:
     _visualization of a dynamics, with various coloring options_ 
      
      
