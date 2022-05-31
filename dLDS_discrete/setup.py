@@ -8,7 +8,7 @@ setuptools.setup(
     author="noga mudrik",
 
     name="dLDS_discrete",
-    version="0.0.7",
+    version="0.0.8",
     
     author_email="<nmudrik1@jhmi.edu>",
     description="dLDS discrete model package",
