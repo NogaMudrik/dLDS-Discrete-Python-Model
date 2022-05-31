@@ -24,3 +24,10 @@ setuptools.setup(
     python_requires=">=3.6",
 )
 
+#    package_dir={"": "src"},
+#    packages=setuptools.find_packages(where="src"),
+#author="nmudrik1",
+#    url="https://github.com/NogaMudrik/Discrete-Python-Model---dLDS-paper",
+#    project_urls={
+#        "mmain code": "https://github.com/NogaMudrik/Discrete-Python-Model---dLDS-paper",
+#    }
