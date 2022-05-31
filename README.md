@@ -6,7 +6,25 @@ Decomposed Linear Dynamical Systems (dLDS) for \newline  learning the latent com
 ## B) Package and functions description
 
 =================================================================
-# A) Package and functions description
+# A) Main Model Figures
+
+### Model descrition
+![image](https://user-images.githubusercontent.com/90283200/171279434-f27ec55e-e34c-46c1-bb9a-7efb5b3c018c.png)
+ 
+### Lorenz - visualization of coefficients smooth temporal evoulution
+![image](https://user-images.githubusercontent.com/90283200/171278476-3bb4fa4b-935e-4334-851e-4a9ede69fa3c.png)
+
+
+### Fitzhugh Nagumo model - dLDS vs rSLDS
+![image](https://user-images.githubusercontent.com/90283200/171278183-0c1866b8-34a5-4a4c-9d26-9cb4f5ee7764.png)
+
+
+### Lorenz - dLDS vs rSLDS
+![image](https://user-images.githubusercontent.com/90283200/171278344-f0585304-cee0-499c-af1c-62aaa67028ec.png)
+
+### _C. elegans_
+![image](https://user-images.githubusercontent.com/90283200/171279482-fb59ffa1-8755-475a-a97b-c161afc615a1.png)
+
 
 =================================================================
 # B) Package and functions description
