@@ -26,7 +26,8 @@ diversity of dynamics that is obscured when classified into discrete states.
       2. (if pickle not installed):    pip install pickle-mixin         [in the cmd]
       3. !pip install dLDS-discrete                                     [in the cmd]
       4. from dlds_discrete import main_functions                       [in Python console]
-      5. from main_functions import *                                   [in Python console]
+      5. from dlds_discrete.main_functions import *                     [in Python console]
+      6. Use any function from the ones described below
       
       
 
