@@ -1,13 +1,13 @@
 Metadata-Version: 2.1
-Name: dLDS-discrete
-Version: 0.0.6
+Name: dLDS-discrete2
+Version: 0.0.2
 Summary: dLDS discrete model package
 Author: noga mudrik
 Author-email: <nmudrik1@jhmi.edu>
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
-Requires-Python: >=3.8
+Requires-Python: >=3.6
 Description-Content-Type: text/markdown
 License-File: LICENSE.txt
 

@@ -1,0 +1,16 @@
+numpy
+matplotlib
+scipy
+scipy
+pandas
+webcolors
+itertools
+seaborn
+colormap
+sklearn
+pylops
+os
+dill
+mat73
+warnings
+pickle
