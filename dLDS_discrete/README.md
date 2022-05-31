@@ -23,9 +23,10 @@ diversity of dynamics that is obscured when classified into discrete states.
 
 # Installation Instructions:
       1. (if itertools not installed): sudo pip3 install more-itertools [in the cmd]
-      2. !pip install dLDS-discrete                                     [in the cmd]
-      3. from dlds_discrete import main_functions                       [in Python console]
-      4. from main_functions import *                                   [in Python console]
+      2. (if pickle not installed):    pip install pickle-mixin         [in the cmd]
+      3. !pip install dLDS-discrete                                     [in the cmd]
+      4. from dlds_discrete import main_functions                       [in Python console]
+      5. from main_functions import *                                   [in Python console]
       
       
 
