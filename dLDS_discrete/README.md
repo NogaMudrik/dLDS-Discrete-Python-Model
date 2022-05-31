@@ -1,6 +1,3 @@
-**DISCRETE MODEL VISUALZATIONS**
-
-
 **The discrete model described in:** _Noga Mudrik*, Yenho Chen*, Eva Yezerets, Christopher Rozell, Adam Charles. "Decomposed Linear Dynamical Systems (dLDS) for learning the latent components of neural dynamics". 2022_
 
 
@@ -24,6 +21,13 @@ attractors to demonstrate that decomposed systems can well approximate nonlinear
 dynamics. Additionally, we apply our model to C. elegans data, illustrating a
 diversity of dynamics that is obscured when classified into discrete states.
 
+# Installation Instructions:
+      1. (if itertools not installed): sudo pip3 install more-itertools [in the cmd]
+      2. !pip install dLDS-discrete
+      3. from dlds_discrete import main_functions
+      4. from main_functions import *
+      
+      
 
 ## Main Useful Functions:
 
