@@ -23,9 +23,9 @@ diversity of dynamics that is obscured when classified into discrete states.
 
 # Installation Instructions:
       1. (if itertools not installed): sudo pip3 install more-itertools [in the cmd]
-      2. !pip install dLDS-discrete
-      3. from dlds_discrete import main_functions
-      4. from main_functions import *
+      2. !pip install dLDS-discrete                                     [in the cmd]
+      3. from dlds_discrete import main_functions                       [in Python console]
+      4. from main_functions import *                                   [in Python console]
       
       
 
