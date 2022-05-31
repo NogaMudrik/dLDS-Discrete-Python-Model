@@ -8,7 +8,5 @@ seaborn
 colormap
 sklearn
 pylops
-os
 dill
 mat73
-pickle
