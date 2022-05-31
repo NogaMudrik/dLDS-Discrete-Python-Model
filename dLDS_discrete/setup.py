@@ -23,7 +23,7 @@ setuptools.setup(
 
     python_requires=">=3.8",
     install_requires = ['numpy', 'matplotlib','scipy','scipy','pandas','webcolors',
-                        'seaborn','colormap','sklearn', 'pylops','os','dill','mat73','warnings','pickle']
+                        'seaborn','colormap','sklearn', 'pylops','os','dill','mat73','pickle']
 )
 
 #    package_dir={"": "src"},
