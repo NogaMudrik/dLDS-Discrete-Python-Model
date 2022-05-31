@@ -8,7 +8,7 @@ setuptools.setup(
     author="noga mudrik",
 
     name="dLDS_discrete",
-    version="0.0.6",
+    version="0.0.7",
     
     author_email="<nmudrik1@jhmi.edu>",
     description="dLDS discrete model package",
@@ -22,7 +22,7 @@ setuptools.setup(
     ],
 
     python_requires=">=3.8",
-    install_requires = ['numpy', 'matplotlib','scipy','scipy','pandas','webcolors','itertools', 
+    install_requires = ['numpy', 'matplotlib','scipy','scipy','pandas','webcolors',
                         'seaborn','colormap','sklearn', 'pylops','os','dill','mat73','warnings','pickle']
 )
 
