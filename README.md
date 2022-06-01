@@ -2,11 +2,21 @@
 Decomposed Linear Dynamical Systems (dLDS) for \newline  learning the latent components of neural dynamics
 
 # Outine:
-## A) Main Model Figues
-## B) Package and functions description
+## A) Installation Instructions
+## B) Main Model Figues
+## C) Package and functions description
 
 =================================================================
-# A) Main Model Figures
+# A) Installation Instructions
+Our discrete model can also be pip-installed using the dlds_discrete package, as described at https://pypi.org/project/dLDS-discrete-2022/
+   1. Make sure you have _os_, _pickle_, and _itertools_ installed in your python directory
+   2. In the cmd, write:  _!pip install dLDS-discrete-2022_
+   2. Import the package: _import dlds_discrete_
+   3. Import all functions in the main_functions script: _from dlds_discrete.main_functions import *_
+   4. Call the desired function, as described below (in section (C)) 
+
+=================================================================
+# B) Main Model Figures
 
 ### Model descrition
 ![image](https://user-images.githubusercontent.com/90283200/171279434-f27ec55e-e34c-46c1-bb9a-7efb5b3c018c.png)
@@ -27,7 +37,7 @@ Decomposed Linear Dynamical Systems (dLDS) for \newline  learning the latent com
 
 
 =================================================================
-# B) Package and functions description
+# C) Package and functions description
 
 ## Main Useful Functions:
 
