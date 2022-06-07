@@ -1,3 +1,16 @@
+Metadata-Version: 2.1
+Name: dLDS-discrete-2022
+Version: 0.1.1
+Summary: dLDS discrete model package
+Author: noga mudrik
+Author-email: <nmudrik1@jhmi.edu>
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+
 **The discrete model described in:** _Noga Mudrik*, Yenho Chen*, Eva Yezerets, Christopher Rozell, Adam Charles. "Decomposed Linear Dynamical Systems (dLDS) for learning the latent components of neural dynamics". 2022_
 
 
@@ -130,7 +143,7 @@ _create the dynamics reconstruction using the operators and coefficients obtaine
 
 
 ### 4. visualize_dyn:
-_visualization of the dynamics, with various coloring options_ 
+_visualization of a dynamics, with various coloring options_ 
      
 
 **visualize_dyn**_(dyn,ax = [], params_plot = {},turn_off_back = False, marker_size = 10, include_line = False, 
