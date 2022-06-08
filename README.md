@@ -1,12 +1,27 @@
+**The discrete model described in: Noga Mudrik, Yenho Chen, Eva Yezerets, Christopher Rozell, Adam Charles. "Decomposed Linear Dynamical Systems (dLDS) for learning the latent components of neural dynamics". 2022**
+
+Learning interpretable representations of neural dynamics at a population level is a crucial first step to understanding how neural activity patterns over time relate to perception and behavior. Models of neural dynamics often focus on either low-dimensional projections of neural activity, or on learning dynamical systems that explicitly relate to the neural state over time. We discuss how these two approaches are interrelated by considering dynamical systems as representative of flows on a low-dimensional manifold. Building on this concept, we propose a new decomposed dynamical system model that represents complex nonstationary and nonlinear dynamics of time-series data as a sparse combination of simpler, more interpretable components. The decomposed nature of the dynamics generalizes over previous switched approaches and enables modeling of overlapping and non-stationary drifts in the dynamics. We further present a dictionary learning- driven approach to model fitting, where we leverage recent results in tracking sparse vectors over time. We demonstrate that our model can learn efficient representations and smoothly transition between dynamical modes in both continuous-time and discrete-time examples. We show results on low-dimensional linear and nonlinear attractors to demonstrate that decomposed systems can well approximate nonlinear dynamics. Additionally, we apply our model to C. elegans data, illustrating a diversity of dynamics that is obscured when classified into discrete states.
+
 # Discrete-Python-Model---Decomposed-Linear-Dynamical-Systems-dLDS-paper
-Decomposed Linear Dynamical Systems (dLDS) for \newline  learning the latent components of neural dynamics
+Decomposed Linear Dynamical Systems (dLDS) for learning the latent components of neural dynamics
 
 # Outine:
-## A) Main Model Figues
-## B) Package and functions description
+## A) Installation Instructions
+## B) Main Model Figues
+## C) Package and functions description
 
 =================================================================
-# A) Main Model Figures
+# A) Installation Instructions
+Our discrete model can also be pip-installed using the dlds_discrete package, as described at https://pypi.org/project/dLDS-discrete-2022/
+   1. Make sure you have _os_, _pickle_, and _itertools_ installed in your python directory
+   2. In the cmd, write:  _!pip install dLDS-discrete-2022_
+   2. Import the package: _import dlds_discrete_
+   3. Import all functions in the main_functions script: _from dlds_discrete.main_functions import *_
+   4. Call the desired function, as described below (in section (C)) 
+
+
+=================================================================
+# B) Main Model Figures
 
 ### Model descrition
 ![image](https://user-images.githubusercontent.com/90283200/171279434-f27ec55e-e34c-46c1-bb9a-7efb5b3c018c.png)
@@ -27,7 +42,7 @@ Decomposed Linear Dynamical Systems (dLDS) for \newline  learning the latent com
 
 
 =================================================================
-# B) Package and functions description
+# C) Package and functions description
 
 ## Main Useful Functions:
 
@@ -128,7 +143,7 @@ _create the dynamics reconstruction using the operators and coefficients obtaine
 
 
 ### 4. visualize_dyn:
-_visualization of a dynamics, with various coloring options_ 
+_visualization of the dynamics, with various coloring options_ 
      
 
 **visualize_dyn**_(dyn,ax = [], params_plot = {},turn_off_back = False, marker_size = 10, include_line = False, 

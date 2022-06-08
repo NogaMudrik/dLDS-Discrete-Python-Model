@@ -130,7 +130,7 @@ _create the dynamics reconstruction using the operators and coefficients obtaine
 
 
 ### 4. visualize_dyn:
-_visualization of a dynamics, with various coloring options_ 
+_visualization of the dynamics, with various coloring options_ 
      
 
 **visualize_dyn**_(dyn,ax = [], params_plot = {},turn_off_back = False, marker_size = 10, include_line = False, 
