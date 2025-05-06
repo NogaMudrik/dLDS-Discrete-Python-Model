@@ -7,7 +7,7 @@ Decomposed Linear Dynamical Systems (dLDS) for learning the latent components of
 Imports
 """
 
-# simaple imports
+# simple imports
 import matplotlib
 import numpy as np
 from scipy import linalg
