@@ -186,3 +186,17 @@ _visualization of the dynamics, with various coloring options_
                Output:   
                    h (only if return_fig) -> returns the figure   
                 
+
+# D) Dependencies and Package Versions:
+This project was developed and tested with the following package versions:
+   - matplotlib==3.8.2
+   - numpy==1.23.5
+   - scipy==1.8.0
+   - pandas==1.5.0
+   - webcolors==1.11.1
+   - seaborn==0.11.2
+   - colormap==1.0.4
+   - sklearn==1.0.2
+   - pylops==1.18.2
+   - dill==0.3.4
+   - mat73==0.59
