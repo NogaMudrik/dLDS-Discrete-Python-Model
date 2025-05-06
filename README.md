@@ -10,9 +10,11 @@ Learning interpretable representations of neural dynamics at a population level 
 ## A) Installation Instructions
 ## B) Main Model Figues
 ## C) Package and functions description
+## D) Dependencies and Package Versions
 
 =================================================================
 # A) Installation Instructions
+## 1) Option 1: via PyPi
 Our discrete model can also be pip-installed using the dlds_discrete package, as described at https://pypi.org/project/dLDS-discrete-2022/
    1. Make sure you have _os_, _pickle_, and _itertools_ installed in your python directory
    2. In the cmd, write:  _!pip install dLDS-discrete-2022_
@@ -27,6 +29,13 @@ If you prefer to use the GitHub code, the main code is located at:  _\dLDS-Discr
 3) **'train_discrete_model_example'** - an example for how to train our model
 
 The Python notebook at the home directory (**discrete_dlds_visualization.ipynb**) may help you understand how to use the code. 
+
+## 2) Option 2: Direct Download via GitHub Desktop (or pip)
+* Open GitHub Desktop → click **"File" → "Clone Repository"**, then enter the repo URL or find it under the GitHub tab.
+* You can then run **`train_discrete_model_example.py`**. You may need to modify the data loading section to use your own data.
+
+
+
 
 =================================================================
 # B) Main Model Figures
