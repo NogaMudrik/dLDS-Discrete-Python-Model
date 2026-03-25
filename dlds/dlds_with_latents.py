@@ -322,6 +322,101 @@ class dLDS_with_latents:
         return x_list
 
     
+    def _update_xc_joint(self, y_list, D, F, coefficients_prev, x_prev, solver_params={}):
+        """
+        Update latent states x and coefficients c jointly.
+        
+        Per timepoint t, solves:
+            [D        0              ] [x_{t+1}]   [y_{t+1}]
+            [I   -f_x_stacked       ] [c_t    ] = [0      ]
+            [0   sqrt(smooth)*I_M   ]              [sqrt(smooth)*c_{t-1}]
+        
+        where f_x_stacked = [f_1 x_t | f_2 x_t | ... | f_M x_t], shape (p, M).
+        
+        For t=0: x_0 = pinv(D) @ y_0 (observation only, no dynamics).
+        """
+        assert isinstance(y_list, list) and len(y_list) > 0, "y_list must be non-empty list"
+        assert D is not None and D.ndim == 2, "D must be 2D array"
+        assert isinstance(F, list) and len(F) > 0, "F must be non-empty list"
+        assert isinstance(coefficients_prev, list) and len(coefficients_prev) == len(y_list), "coefficients_prev length (%d) must match y_list length (%d)" % (len(coefficients_prev), len(y_list))
+        
+        obs_dim, latent_dim = D.shape
+        num_subdyns = len(F)
+        assert all(f.shape == (latent_dim, latent_dim) for f in F), "All f matrices must be (%d, %d)" % (latent_dim, latent_dim)
+        
+        D_pinv = linalg.pinv(D)
+        assert D_pinv.shape == (latent_dim, obs_dim), "D_pinv shape must be (%d, %d), got %s" % (latent_dim, obs_dim, D_pinv.shape)
+        
+        smooth_term = self.config.smooth_term
+        l1 = self.config.reg_term
+        solver = self.config.solver
+        
+        x_list = []
+        coefficients = []
+        
+        for trial_idx, y in enumerate(y_list):
+            T = y.shape[1]
+            assert y.shape[0] == obs_dim, "y obs_dim (%d) must match D obs_dim (%d) for trial %d" % (y.shape[0], obs_dim, trial_idx)
+            assert T > 1, "Trial %d must have T > 1, got %d" % (trial_idx, T)
+            
+            x_trial = np.zeros((latent_dim, T))
+            c_trial = np.zeros((num_subdyns, T - 1))
+            
+            # t=0: solve x_0 from observation only
+            x_trial[:, 0] = D_pinv @ y[:, 0]
+            assert not np.isnan(x_trial[:, 0]).any(), "x_0 contains NaN for trial %d" % trial_idx
+            
+            for t in range(T - 1):
+                x_t = x_trial[:, t]
+                y_next = y[:, t + 1]
+                
+                # Build f_x_stacked = [f_1 x_t | f_2 x_t | ... | f_M x_t], shape (p, M)
+                f_x_stacked = np.column_stack([f @ x_t for f in F])
+                assert f_x_stacked.shape == (latent_dim, num_subdyns), "f_x_stacked shape must be (%d, %d), got %s at t=%d" % (latent_dim, num_subdyns, f_x_stacked.shape, t)
+                
+                # Top block: D @ x_{t+1} = y_{t+1}
+                # Bottom block: I @ x_{t+1} - f_x_stacked @ c_t = 0
+                A_top = np.hstack([D, np.zeros((obs_dim, num_subdyns))])
+                A_bot = np.hstack([np.eye(latent_dim), -f_x_stacked])
+                b_top = y_next
+                b_bot = np.zeros(latent_dim)
+                
+                assert A_top.shape == (obs_dim, latent_dim + num_subdyns), "A_top shape must be (%d, %d), got %s" % (obs_dim, latent_dim + num_subdyns, A_top.shape)
+                assert A_bot.shape == (latent_dim, latent_dim + num_subdyns), "A_bot shape must be (%d, %d), got %s" % (latent_dim, latent_dim + num_subdyns, A_bot.shape)
+                
+                A_full = np.vstack([A_top, A_bot])
+                b_full = np.concatenate([b_top, b_bot])
+                
+                # Smoothness on c
+                if smooth_term > 0 and t > 0:
+                    sqrt_smooth = np.sqrt(smooth_term)
+                    A_smooth = np.hstack([np.zeros((num_subdyns, latent_dim)), sqrt_smooth * np.eye(num_subdyns)])
+                    b_smooth = sqrt_smooth * c_trial[:, t - 1]
+                    assert A_smooth.shape == (num_subdyns, latent_dim + num_subdyns), "A_smooth shape must be (%d, %d), got %s" % (num_subdyns, latent_dim + num_subdyns, A_smooth.shape)
+                    assert b_smooth.shape == (num_subdyns,), "b_smooth shape must be (%d,), got %s" % (num_subdyns, b_smooth.shape)
+                    A_full = np.vstack([A_full, A_smooth])
+                    b_full = np.concatenate([b_full, b_smooth])
+                
+                xc = solve_lasso_style(A_full, b_full, l1=l1, l2=self.config.l2_reg, solver=solver, solver_params={**{'num_iters': self.config.solver_max_iters}, **solver_params}, random_state=self.config.seed + t)
+                assert xc.shape == (latent_dim + num_subdyns,), "xc shape must be (%d,), got %s at t=%d" % (latent_dim + num_subdyns, xc.shape, t)
+                
+                x_trial[:, t + 1] = xc[:latent_dim]
+                c_trial[:, t] = xc[latent_dim:]
+                
+                assert not np.isnan(x_trial[:, t + 1]).any(), "x_{t+1} contains NaN at t=%d, trial %d" % (t, trial_idx)
+                assert not np.isinf(x_trial[:, t + 1]).any(), "x_{t+1} contains Inf at t=%d, trial %d" % (t, trial_idx)
+                assert not np.isnan(c_trial[:, t]).any(), "c_t contains NaN at t=%d, trial %d" % (t, trial_idx)
+            
+            assert x_trial.shape == (latent_dim, T), "x_trial shape must be (%d, %d), got %s for trial %d" % (latent_dim, T, x_trial.shape, trial_idx)
+            assert c_trial.shape == (num_subdyns, T - 1), "c_trial shape must be (%d, %d), got %s for trial %d" % (num_subdyns, T - 1, c_trial.shape, trial_idx)
+            
+            x_list.append(x_trial)
+            coefficients.append(c_trial)
+        
+        assert len(x_list) == len(y_list), "x_list length (%d) must match y_list length (%d)" % (len(x_list), len(y_list))
+        assert len(coefficients) == len(y_list), "coefficients length (%d) must match y_list length (%d)" % (len(coefficients), len(y_list))
+        return x_list, coefficients
+
     def _update_c(self, x_list, F, coefficients_prev=None, solver_params = {}):
         """Update coefficients c given latent states x and F."""
         assert isinstance(x_list, list) and len(x_list) > 0, "x_list must be non-empty list, got %s with len %d" % (type(x_list).__name__, len(x_list) if isinstance(x_list, list) else 0)
@@ -540,7 +635,7 @@ class dLDS_with_latents:
     # Fit
     # =========================================================================
     
-    def fit(self, y, latent_dim=None, init_D='random', normalize_D_cols=False):
+    def fit(self, y, latent_dim=None, init_D='random', normalize_D_cols=False, joint_xc=False):
         """
         Fit dLDS model to observations.
         
@@ -619,12 +714,13 @@ class dLDS_with_latents:
         converged = False
         for iteration in pbar:
 # 1. Update x
-            x_list = self._update_x(y_list, D, F, coefficients, x_list)
-            assert len(x_list) == n_trials, "x_list length must remain %d after update" % n_trials
-            
-            # 2. Update c
             solver_params = self.config.solver_params
-            coefficients = self._update_c(x_list, F, coefficients, solver_params = solver_params)
+            if joint_xc:
+                x_list, coefficients = self._update_xc_joint(y_list, D, F, coefficients, x_list, solver_params=solver_params)
+            else:
+                x_list = self._update_x(y_list, D, F, coefficients, x_list)
+                coefficients = self._update_c(x_list, F, coefficients, solver_params=solver_params)
+            assert len(x_list) == n_trials, "x_list length must remain %d after update" % n_trials
             assert len(coefficients) == n_trials, "coefficients length must remain %d after update" % n_trials
             
             # 3. Update D
@@ -706,8 +802,11 @@ class dLDS_with_latents:
             step_f = max(step_f * self.config.gd_decay, self.config.min_step_f)
         
         # === Final updates ===
-        coefficients = self._update_c(x_list, F, coefficients)
-        x_list = self._update_x(y_list, D, F, coefficients, x_list)
+        if joint_xc:
+            x_list, coefficients = self._update_xc_joint(y_list, D, F, coefficients, x_list)
+        else:
+            coefficients = self._update_c(x_list, F, coefficients)
+            x_list = self._update_x(y_list, D, F, coefficients, x_list)
         
         final_error = error_history[-1] if error_history else np.inf
         assert len(error_history) > 0, "error_history must be non-empty after fitting"
